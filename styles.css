@@ -1518,7 +1518,8 @@ a:focus-visible {
 }
 
 .backup-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1535,6 +1536,28 @@ a:focus-visible {
 
 .backup-actions .button-quiet:hover {
   color: var(--green-dark);
+}
+
+.backup-text-button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: 0;
+  color: rgba(255, 250, 241, 0.72);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 250, 241, 0.25);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.backup-text-button:hover {
+  color: #fffaf1;
+  text-decoration-color: currentColor;
 }
 
 .product-library {
@@ -2117,7 +2140,7 @@ a:focus-visible {
 
   .backup-actions {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .backup-actions .button {

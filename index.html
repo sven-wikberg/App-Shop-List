@@ -261,8 +261,10 @@
             <p>Le fichier contient vos produits, catégories, minimums de stock et la liste en cours.</p>
           </div>
           <div class="backup-actions">
-            <button class="button button-dark" id="exportBackupButton" type="button">Télécharger une sauvegarde</button>
-            <label class="button button-quiet" for="backupFileInput">Restaurer un fichier</label>
+            <button class="button button-dark" id="saveRepositoryBackupButton" type="button">Sauver dans le dossier</button>
+            <button class="button button-quiet" id="loadRepositoryBackupButton" type="button">Charger la sauvegarde</button>
+            <button class="backup-text-button" id="exportBackupButton" type="button">Télécharger un fichier</button>
+            <label class="backup-text-button" for="backupFileInput">Importer un fichier</label>
             <input id="backupFileInput" type="file" accept="application/json,.json" hidden />
           </div>
         </section>

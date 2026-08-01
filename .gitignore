@@ -60,3 +60,7 @@ next-env.d.ts
 /postcss.config.mjs
 /tsconfig.json
 /vite.config.ts
+
+# Python runtime cache
+__pycache__/
+*.pyc

@@ -224,6 +224,8 @@ const elements = {
   categorySubmitLabel: document.querySelector("#categorySubmitLabel"),
   cancelCategoryButton: document.querySelector("#cancelCategoryButton"),
   categoryList: document.querySelector("#categoryList"),
+  saveRepositoryBackupButton: document.querySelector("#saveRepositoryBackupButton"),
+  loadRepositoryBackupButton: document.querySelector("#loadRepositoryBackupButton"),
   exportBackupButton: document.querySelector("#exportBackupButton"),
   backupFileInput: document.querySelector("#backupFileInput"),
   manageProductList: document.querySelector("#manageProductList"),
@@ -367,8 +369,8 @@ function handleCategorySubmit(event) {
   showToast(originalName ? "Catégorie modifiée" : "Catégorie ajoutée");
 }
 
-function exportBackup() {
-  const backup = {
+function createBackupData() {
+  return {
     app: "juste-ce-quil-faut",
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -376,6 +378,10 @@ function exportBackup() {
     products: state.products,
     needed: [...state.needed],
   };
+}
+
+function exportBackup() {
+  const backup = createBackupData();
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -409,43 +415,75 @@ function validateBackupProduct(product) {
   };
 }
 
+function applyBackup(backup) {
+  if (backup?.app !== "juste-ce-quil-faut" || !Array.isArray(backup.products) || !Array.isArray(backup.categories)) {
+    throw new Error("Format de sauvegarde inconnu");
+  }
+  const products = backup.products.map(validateBackupProduct);
+  const categories = [
+    ...new Set([
+      ...backup.categories.map((category) => String(category).trim()).filter(Boolean),
+      ...products.map((product) => product.category),
+    ]),
+  ];
+  const productIds = new Set(products.map((product) => product.id));
+  const needed = Array.isArray(backup.needed)
+    ? backup.needed.filter((id) => productIds.has(String(id))).map(String)
+    : [];
+
+  if (!window.confirm(`Restaurer ${products.length} produit${products.length > 1 ? "s" : ""} ? Les données actuelles seront remplacées.`)) {
+    return false;
+  }
+
+  state.products = products;
+  state.categories = categories;
+  state.needed = new Set(needed);
+  state.completedCategories.clear();
+  saveJSON(STORAGE_KEYS.products, state.products);
+  persistCategories();
+  persistNeeded();
+  resetCategoryForm();
+  render();
+  goToHome();
+  showToast("Sauvegarde restaurée");
+  return true;
+}
+
 async function restoreBackup(file) {
   try {
-    const backup = JSON.parse(await file.text());
-    if (backup?.app !== "juste-ce-quil-faut" || !Array.isArray(backup.products) || !Array.isArray(backup.categories)) {
-      throw new Error("Format de sauvegarde inconnu");
-    }
-    const products = backup.products.map(validateBackupProduct);
-    const categories = [
-      ...new Set([
-        ...backup.categories.map((category) => String(category).trim()).filter(Boolean),
-        ...products.map((product) => product.category),
-      ]),
-    ];
-    const productIds = new Set(products.map((product) => product.id));
-    const needed = Array.isArray(backup.needed)
-      ? backup.needed.filter((id) => productIds.has(String(id))).map(String)
-      : [];
-
-    if (!window.confirm(`Restaurer ${products.length} produit${products.length > 1 ? "s" : ""} ? Les données actuelles seront remplacées.`)) {
-      return;
-    }
-
-    state.products = products;
-    state.categories = categories;
-    state.needed = new Set(needed);
-    state.completedCategories.clear();
-    saveJSON(STORAGE_KEYS.products, state.products);
-    persistCategories();
-    persistNeeded();
-    resetCategoryForm();
-    render();
-    goToHome();
-    showToast("Sauvegarde restaurée");
+    applyBackup(JSON.parse(await file.text()));
   } catch {
     window.alert("Ce fichier ne semble pas être une sauvegarde valide de l’application.");
   } finally {
     elements.backupFileInput.value = "";
+  }
+}
+
+function showRepositoryBackupHelp() {
+  window.alert("Pour utiliser la sauvegarde intégrée au dossier, lancez l’application avec start_app.bat.");
+}
+
+async function saveRepositoryBackup() {
+  try {
+    const response = await fetch("/api/backup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(createBackupData()),
+    });
+    if (!response.ok) throw new Error("Sauvegarde impossible");
+    showToast("Sauvegarde enregistrée dans le dossier");
+  } catch {
+    showRepositoryBackupHelp();
+  }
+}
+
+async function loadRepositoryBackup() {
+  try {
+    const response = await fetch("/api/backup", { cache: "no-store" });
+    if (!response.ok) throw new Error("Sauvegarde introuvable");
+    applyBackup(await response.json());
+  } catch {
+    showRepositoryBackupHelp();
   }
 }
 
@@ -932,6 +970,8 @@ elements.categoryList.addEventListener("click", (event) => {
   if (action === "edit") editCategory(category);
   if (action === "delete") deleteCategory(category);
 });
+elements.saveRepositoryBackupButton.addEventListener("click", saveRepositoryBackup);
+elements.loadRepositoryBackupButton.addEventListener("click", loadRepositoryBackup);
 elements.exportBackupButton.addEventListener("click", exportBackup);
 elements.backupFileInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
