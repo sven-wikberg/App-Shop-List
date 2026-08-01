@@ -1,6 +1,6 @@
 const STORAGE_KEYS = {
-  products: "juste-ce-quil-faut.products.v2",
-  needed: "juste-ce-quil-faut.needed.v2",
+  products: "juste-ce-quil-faut.products.v3",
+  needed: "juste-ce-quil-faut.needed.v3",
   settings: "juste-ce-quil-faut.settings.v1",
 };
 
@@ -107,30 +107,40 @@ const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd",
 const DEFAULT_PRODUCT_IMAGE = "assets/product-placeholder.png";
 
 const state = {
-  products: loadJSON(STORAGE_KEYS.products, []),
+  products: loadJSON(STORAGE_KEYS.products, DEFAULT_PRODUCTS),
   needed: new Set(loadJSON(STORAGE_KEYS.needed, [])),
   settings: loadJSON(STORAGE_KEYS.settings, { email: "", subject: "Ma liste de courses" }),
-  activeCategory: "Tous",
-  search: "",
+  reviewCategory: "",
+  reviewQueue: [],
+  reviewIndex: 0,
+  completedCategories: new Set(),
+  decisionLocked: false,
 };
 
 const elements = {
-  productGrid: document.querySelector("#productGrid"),
   shoppingList: document.querySelector("#shoppingList"),
   listEmpty: document.querySelector("#listEmpty"),
-  emptyProducts: document.querySelector("#emptyProducts"),
-  categoryTabs: document.querySelector("#categoryTabs"),
-  inventoryCount: document.querySelector("#inventoryCount"),
   listCount: document.querySelector("#listCount"),
   emailListButton: document.querySelector("#emailListButton"),
   copyListButton: document.querySelector("#copyListButton"),
   clearListButton: document.querySelector("#clearListButton"),
-  searchInput: document.querySelector("#searchInput"),
+  locationStage: document.querySelector("#locationStage"),
+  reviewStage: document.querySelector("#reviewStage"),
+  completeStage: document.querySelector("#completeStage"),
+  locationGrid: document.querySelector("#locationGrid"),
+  reviewCard: document.querySelector("#reviewCard"),
+  reviewRoom: document.querySelector("#reviewRoom"),
+  reviewProgressText: document.querySelector("#reviewProgressText"),
+  reviewProgressBar: document.querySelector("#reviewProgressBar"),
+  completeRoom: document.querySelector("#completeRoom"),
+  completeSummary: document.querySelector("#completeSummary"),
   shoppingView: document.querySelector("#shoppingView"),
   productView: document.querySelector("#productView"),
   productForm: document.querySelector("#productForm"),
   productFormTitle: document.querySelector("#productFormTitle"),
   productSubmitLabel: document.querySelector("#productSubmitLabel"),
+  manageProductList: document.querySelector("#manageProductList"),
+  libraryCount: document.querySelector("#libraryCount"),
   settingsDialog: document.querySelector("#settingsDialog"),
   settingsForm: document.querySelector("#settingsForm"),
   settingsEmail: document.querySelector("#settingsEmail"),
@@ -191,32 +201,9 @@ function referenceLine(product) {
 }
 
 function renderCategories() {
-  const categories = ["Tous", ...getCategories()];
-  if (!categories.includes(state.activeCategory)) state.activeCategory = "Tous";
-  elements.categoryTabs.innerHTML = categories
-    .map(
-      (category) => `
-        <button
-          class="category-tab ${category === state.activeCategory ? "active" : ""}"
-          type="button"
-          data-category="${escapeHTML(category)}"
-          aria-pressed="${category === state.activeCategory}"
-        >${escapeHTML(category)}</button>`
-    )
-    .join("");
-
   elements.categorySuggestions.innerHTML = getCategories()
     .map((category) => `<option value="${escapeHTML(category)}"></option>`)
     .join("");
-}
-
-function filteredProducts() {
-  const term = normalize(state.search);
-  return state.products.filter((product) => {
-    const categoryMatches = state.activeCategory === "Tous" || product.category === state.activeCategory;
-    const haystack = normalize([product.name, product.brand, product.detail, product.format, product.category].join(" "));
-    return categoryMatches && (!term || haystack.includes(term));
-  });
 }
 
 function visualMarkup(product, className = "product-visual") {
@@ -224,35 +211,151 @@ function visualMarkup(product, className = "product-visual") {
   return `<div class="${className}" style="--product-accent:${accentFor(product)}">${content}</div>`;
 }
 
-function renderProducts() {
-  const products = filteredProducts();
-  elements.inventoryCount.textContent = `${products.length} référence${products.length > 1 ? "s" : ""}`;
-  elements.emptyProducts.hidden = products.length > 0;
-  elements.productGrid.hidden = products.length === 0;
-  elements.productGrid.innerHTML = products
-    .map((product) => {
-      const isNeeded = state.needed.has(product.id);
+function roomIcon(category) {
+  const normalized = normalize(category);
+  if (normalized.includes("cuisine")) return "🍽️";
+  if (normalized.includes("bain")) return "🫧";
+  if (normalized.includes("buander")) return "👕";
+  if (normalized.includes("toilet")) return "🧻";
+  if (normalized.includes("entretien")) return "✨";
+  return "🗄️";
+}
+
+function renderLocations() {
+  const categories = getCategories();
+  if (!categories.length) {
+    elements.locationGrid.innerHTML = `
+      <div class="location-empty">
+        <span aria-hidden="true">＋</span>
+        <h3>Aucun produit pour l’instant</h3>
+        <p>Créez votre première référence pour commencer la vérification.</p>
+        <button class="button button-dark" type="button" data-open-products>Créer un produit</button>
+      </div>`;
+    return;
+  }
+
+  elements.locationGrid.innerHTML = categories
+    .map((category, index) => {
+      const products = state.products.filter((product) => product.category === category);
+      const neededCount = products.filter((product) => state.needed.has(product.id)).length;
+      const completed = state.completedCategories.has(category);
       return `
-        <article class="product-card ${isNeeded ? "is-needed" : ""}" data-product-id="${escapeHTML(product.id)}">
-          ${visualMarkup(product)}
-          <div class="product-info">
-            <p class="product-category">${escapeHTML(product.category)}</p>
-            <h3 class="product-name">${escapeHTML(product.name)}</h3>
-            <p class="product-reference">${escapeHTML(referenceLine(product))}</p>
-            <div class="product-bottom">
-              <span class="quantity-label">À acheter : ${product.quantity}</span>
-              <button class="need-toggle" type="button" data-action="toggle" aria-pressed="${isNeeded}">
-                ${isNeeded ? "✓ Il en faut" : "Il en faut"}
-              </button>
-            </div>
-          </div>
-          <div class="card-tools">
-            <button class="mini-button" type="button" data-action="edit" title="Modifier" aria-label="Modifier ${escapeHTML(product.name)}">✎</button>
-            <button class="mini-button" type="button" data-action="delete" title="Supprimer" aria-label="Supprimer ${escapeHTML(product.name)}">×</button>
-          </div>
-        </article>`;
+        <button class="location-card ${completed ? "is-complete" : ""}" type="button" data-location="${escapeHTML(category)}" style="--room-accent:${CATEGORY_ACCENTS[index % CATEGORY_ACCENTS.length]}">
+          <span class="location-icon" aria-hidden="true">${roomIcon(category)}</span>
+          <span class="location-copy">
+            <strong>${escapeHTML(category)}</strong>
+            <small>${products.length} produit${products.length > 1 ? "s" : ""}</small>
+          </span>
+          <span class="location-status">${completed ? `✓ Fait${neededCount ? ` · ${neededCount} retenu${neededCount > 1 ? "s" : ""}` : ""}` : "Commencer →"}</span>
+        </button>`;
     })
     .join("");
+}
+
+function renderManageProducts() {
+  elements.libraryCount.textContent = `${state.products.length} référence${state.products.length > 1 ? "s" : ""}`;
+  elements.manageProductList.innerHTML = state.products.length
+    ? state.products
+        .map(
+          (product) => `
+            <article class="manage-product-row" data-manage-id="${escapeHTML(product.id)}">
+              ${visualMarkup(product, "manage-product-thumb")}
+              <div class="manage-product-copy">
+                <span>${escapeHTML(product.category)}</span>
+                <strong>${escapeHTML(product.name)}</strong>
+                <small>${escapeHTML(referenceLine(product))}</small>
+              </div>
+              <strong class="manage-product-quantity">×${product.quantity}</strong>
+              <div class="manage-product-actions">
+                <button class="mini-button" type="button" data-manage-action="edit" aria-label="Modifier ${escapeHTML(product.name)}">✎</button>
+                <button class="mini-button" type="button" data-manage-action="delete" aria-label="Supprimer ${escapeHTML(product.name)}">×</button>
+              </div>
+            </article>`
+        )
+        .join("")
+    : `<div class="manage-empty">Aucune référence enregistrée.</div>`;
+}
+
+function showFlowStage(stageName) {
+  elements.locationStage.hidden = stageName !== "locations";
+  elements.reviewStage.hidden = stageName !== "review";
+  elements.completeStage.hidden = stageName !== "complete";
+}
+
+function startReview(category) {
+  const queue = state.products.filter((product) => product.category === category);
+  if (!queue.length) return;
+  state.reviewCategory = category;
+  state.reviewQueue = queue;
+  state.reviewIndex = 0;
+  state.decisionLocked = false;
+  showFlowStage("review");
+  renderReviewCard();
+}
+
+function renderReviewCard() {
+  const product = state.reviewQueue[state.reviewIndex];
+  if (!product) {
+    finishReview();
+    return;
+  }
+
+  const current = state.reviewIndex + 1;
+  const total = state.reviewQueue.length;
+  elements.reviewRoom.textContent = state.reviewCategory;
+  elements.reviewProgressText.textContent = `${current} sur ${total}`;
+  elements.reviewProgressBar.style.width = `${(current / total) * 100}%`;
+  elements.reviewCard.setAttribute("aria-label", `${product.name}. Choisissez pas besoin ou il en faut.`);
+  elements.reviewCard.innerHTML = `
+    <article class="swipe-card" data-review-id="${escapeHTML(product.id)}">
+      <div class="swipe-verdict verdict-no">Pas besoin</div>
+      <div class="swipe-verdict verdict-yes">Il en faut</div>
+      <div class="swipe-card-image">
+        <img src="${escapeHTML(product.image || DEFAULT_PRODUCT_IMAGE)}" alt="" />
+        <span>${escapeHTML(product.category)}</span>
+      </div>
+      <div class="swipe-card-body">
+        <p class="product-category">Référence ${current}/${total}</p>
+        <h3>${escapeHTML(product.name)}</h3>
+        <p class="swipe-reference">${escapeHTML(referenceLine(product))}</p>
+        <div class="swipe-quantity">
+          <span>Quantité à acheter</span>
+          <strong>${product.quantity}</strong>
+        </div>
+      </div>
+    </article>`;
+  elements.reviewCard.focus({ preventScroll: true });
+}
+
+function decideCurrentProduct(isNeeded) {
+  if (state.decisionLocked) return;
+  const product = state.reviewQueue[state.reviewIndex];
+  const card = elements.reviewCard.querySelector(".swipe-card");
+  if (!product || !card) return;
+  state.decisionLocked = true;
+  card.style.transform = "";
+  card.classList.add(isNeeded ? "leaving-right" : "leaving-left");
+
+  window.setTimeout(() => {
+    if (isNeeded) state.needed.add(product.id);
+    else state.needed.delete(product.id);
+    persistNeeded();
+    renderList();
+    state.reviewIndex += 1;
+    state.decisionLocked = false;
+    renderReviewCard();
+  }, 210);
+}
+
+function finishReview() {
+  state.completedCategories.add(state.reviewCategory);
+  const retained = state.reviewQueue.filter((product) => state.needed.has(product.id)).length;
+  elements.completeRoom.textContent = state.reviewCategory;
+  elements.completeSummary.textContent = retained
+    ? `${retained} produit${retained > 1 ? "s ont" : " a"} été ajouté${retained > 1 ? "s" : ""} à la liste.`
+    : "Rien ne manque dans cet endroit.";
+  showFlowStage("complete");
+  renderLocations();
 }
 
 function selectedProducts() {
@@ -288,7 +391,8 @@ function renderList() {
 
 function render() {
   renderCategories();
-  renderProducts();
+  renderLocations();
+  renderManageProducts();
   renderList();
 }
 
@@ -301,8 +405,8 @@ function toggleNeeded(id, force) {
   if (shouldAdd) state.needed.add(id);
   else state.needed.delete(id);
   persistNeeded();
-  renderProducts();
   renderList();
+  renderLocations();
 }
 
 function showView(viewName) {
@@ -363,7 +467,9 @@ function handleProductSubmit(event) {
 
   if (!saveJSON(STORAGE_KEYS.products, nextProducts)) return;
   state.products = nextProducts;
+  state.completedCategories.delete(category);
   render();
+  showFlowStage("locations");
   showView("shopping");
   showToast(existingProduct ? "Produit modifié" : "Produit ajouté");
 }
@@ -373,6 +479,7 @@ function deleteProduct(product) {
   if (!confirmed) return;
   state.products = state.products.filter((item) => item.id !== product.id);
   state.needed.delete(product.id);
+  state.completedCategories.delete(product.category);
   saveJSON(STORAGE_KEYS.products, state.products);
   persistNeeded();
   render();
@@ -445,28 +552,80 @@ document.querySelector("#shoppingTab").addEventListener("click", () => showView(
 document.querySelector("#productsTab").addEventListener("click", () => openProductForm());
 document.querySelector("#backToListButton").addEventListener("click", () => showView("shopping"));
 document.querySelector("#cancelProductButton").addEventListener("click", () => showView("shopping"));
-elements.searchInput.addEventListener("input", (event) => {
-  state.search = event.target.value;
-  renderProducts();
+elements.locationGrid.addEventListener("click", (event) => {
+  if (event.target.closest("[data-open-products]")) {
+    openProductForm();
+    return;
+  }
+  const location = event.target.closest("[data-location]");
+  if (location) startReview(location.dataset.location);
 });
+document.querySelector("#backToLocationsButton").addEventListener("click", () => showFlowStage("locations"));
+document.querySelector("#chooseAnotherLocationButton").addEventListener("click", () => showFlowStage("locations"));
+document.querySelector("#restartLocationButton").addEventListener("click", () => startReview(state.reviewCategory));
+document.querySelector("#reviewNoButton").addEventListener("click", () => decideCurrentProduct(false));
+document.querySelector("#reviewYesButton").addEventListener("click", () => decideCurrentProduct(true));
 
-elements.categoryTabs.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-category]");
-  if (!button) return;
-  state.activeCategory = button.dataset.category;
-  renderCategories();
-  renderProducts();
-});
-
-elements.productGrid.addEventListener("click", (event) => {
-  const card = event.target.closest("[data-product-id]");
-  const action = event.target.closest("[data-action]")?.dataset.action;
-  if (!card || !action) return;
-  const product = state.products.find((item) => item.id === card.dataset.productId);
+elements.manageProductList.addEventListener("click", (event) => {
+  const row = event.target.closest("[data-manage-id]");
+  const action = event.target.closest("[data-manage-action]")?.dataset.manageAction;
+  if (!row || !action) return;
+  const product = state.products.find((item) => item.id === row.dataset.manageId);
   if (!product) return;
-  if (action === "toggle") toggleNeeded(product.id);
   if (action === "edit") openProductForm(product);
   if (action === "delete") deleteProduct(product);
+});
+
+let swipeStartX = null;
+let swipeDeltaX = 0;
+
+elements.reviewCard.addEventListener("pointerdown", (event) => {
+  if (state.decisionLocked) return;
+  swipeStartX = event.clientX;
+  swipeDeltaX = 0;
+  elements.reviewCard.setPointerCapture?.(event.pointerId);
+});
+
+elements.reviewCard.addEventListener("pointermove", (event) => {
+  if (swipeStartX === null || state.decisionLocked) return;
+  swipeDeltaX = event.clientX - swipeStartX;
+  const card = elements.reviewCard.querySelector(".swipe-card");
+  if (!card) return;
+  card.style.transform = `translateX(${swipeDeltaX}px) rotate(${swipeDeltaX / 28}deg)`;
+  const opacity = Math.min(1, Math.abs(swipeDeltaX) / 90);
+  card.querySelector(swipeDeltaX >= 0 ? ".verdict-yes" : ".verdict-no").style.opacity = opacity;
+});
+
+elements.reviewCard.addEventListener("pointerup", (event) => {
+  if (swipeStartX === null) return;
+  const shouldDecide = Math.abs(swipeDeltaX) > 75;
+  const isNeeded = swipeDeltaX > 0;
+  const card = elements.reviewCard.querySelector(".swipe-card");
+  swipeStartX = null;
+  if (card) {
+    card.style.transform = "";
+    card.querySelectorAll(".swipe-verdict").forEach((verdict) => (verdict.style.opacity = ""));
+  }
+  if (shouldDecide) decideCurrentProduct(isNeeded);
+  elements.reviewCard.releasePointerCapture?.(event.pointerId);
+});
+
+elements.reviewCard.addEventListener("pointercancel", () => {
+  swipeStartX = null;
+  const card = elements.reviewCard.querySelector(".swipe-card");
+  if (card) card.style.transform = "";
+});
+
+window.addEventListener("keydown", (event) => {
+  if (elements.reviewStage.hidden || state.decisionLocked || event.target.matches("input, textarea")) return;
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    decideCurrentProduct(false);
+  }
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    decideCurrentProduct(true);
+  }
 });
 
 elements.shoppingList.addEventListener("click", (event) => {
@@ -481,8 +640,8 @@ elements.clearListButton.addEventListener("click", () => {
   if (!window.confirm("Décocher tous les produits de la liste ?")) return;
   state.needed.clear();
   persistNeeded();
-  renderProducts();
   renderList();
+  renderLocations();
   showToast("Liste vidée");
 });
 

@@ -6,7 +6,8 @@ Une petite application web autonome pour préparer une liste de courses à parti
 
 Ouvrir simplement `index.html` dans un navigateur récent.
 
-- Cliquer sur **Il en faut** pour ajouter un produit à la liste.
+- Choisir un endroit, puis vérifier les produits un par un avec **Pas besoin** ou **Il en faut**.
+- Les cartes peuvent aussi être glissées à gauche ou à droite, comme une liste « Tinder ».
 - Utiliser l’onglet **Mes produits** pour créer ou modifier les références et la quantité habituelle à acheter.
 - Configurer l’adresse e-mail depuis le bouton **E-mail**.
 - Cliquer sur **Préparer l’e-mail** pour ouvrir le logiciel de messagerie avec la liste préremplie.

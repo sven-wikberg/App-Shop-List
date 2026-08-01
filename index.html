@@ -47,47 +47,71 @@
         <section class="hero" aria-labelledby="pageTitle">
           <div>
             <p class="eyebrow">Vérification du placard</p>
-            <h1 id="pageTitle">Le bon produit.<br />La bonne quantité.</h1>
+            <h1 id="pageTitle">Une pièce.<br />Un produit à la fois.</h1>
             <p class="hero-copy">
-              Faites le tour de la maison et indiquez simplement ce qu’il faut racheter.
-              Vos références et quantités habituelles sont déjà prêtes.
+              Choisissez l’endroit à vérifier, puis répondez simplement pour chaque produit.
+              La liste de courses se construit toute seule au fil des décisions.
             </p>
           </div>
           <div class="hero-note" aria-label="Mode d’emploi">
             <span class="note-number">01</span>
-            <p>Cliquez sur <strong>« Il en faut »</strong> pour ajouter un produit à la liste.</p>
+            <p>À gauche : <strong>pas besoin</strong>.<br />À droite : <strong>il en faut</strong>.</p>
           </div>
         </section>
 
         <section class="workspace" aria-label="Gestion des produits">
-          <div class="inventory-panel">
-            <div class="panel-heading">
-              <div>
-                <p class="section-kicker">Mes références</p>
-                <h2>Dans la maison</h2>
+          <div class="inventory-panel review-panel">
+            <section id="locationStage" aria-labelledby="locationTitle">
+              <div class="panel-heading flow-heading">
+                <div>
+                  <p class="section-kicker">Étape 1</p>
+                  <h2 id="locationTitle">Où voulez-vous regarder ?</h2>
+                </div>
+                <p>Chaque endroit est vérifié séparément, sans rien oublier.</p>
               </div>
-              <div class="inventory-count" id="inventoryCount" aria-live="polite"></div>
-            </div>
+              <div class="location-grid" id="locationGrid"></div>
+            </section>
 
-            <div class="toolbar">
-              <label class="search-box" for="searchInput">
-                <span aria-hidden="true">⌕</span>
-                <input
-                  id="searchInput"
-                  type="search"
-                  placeholder="Rechercher une marque, un produit…"
-                  autocomplete="off"
-                />
-              </label>
-              <div class="category-tabs" id="categoryTabs" aria-label="Filtrer par endroit"></div>
-            </div>
+            <section id="reviewStage" aria-labelledby="reviewRoom" hidden>
+              <div class="review-header">
+                <button class="text-button review-back" id="backToLocationsButton" type="button">← Changer d’endroit</button>
+                <div class="review-progress-copy">
+                  <span id="reviewRoom">Cuisine</span>
+                  <strong id="reviewProgressText">1 sur 3</strong>
+                </div>
+              </div>
+              <div class="progress-track" aria-hidden="true"><span id="reviewProgressBar"></span></div>
 
-            <div class="product-grid" id="productGrid"></div>
-            <div class="empty-products" id="emptyProducts" hidden>
-              <span aria-hidden="true">⌕</span>
-              <h3>Aucun produit trouvé</h3>
-              <p>Essayez une autre recherche ou ajoutez une nouvelle référence.</p>
-            </div>
+              <div class="review-deck">
+                <div class="review-card-shell" id="reviewCard" tabindex="0" aria-live="polite"></div>
+              </div>
+
+              <div class="review-actions" aria-label="Décision pour ce produit">
+                <button class="decision-button decision-no" id="reviewNoButton" type="button">
+                  <span aria-hidden="true">×</span>
+                  <strong>Pas besoin</strong>
+                  <small>Flèche gauche</small>
+                </button>
+                <button class="decision-button decision-yes" id="reviewYesButton" type="button">
+                  <span aria-hidden="true">✓</span>
+                  <strong>Il en faut</strong>
+                  <small>Flèche droite</small>
+                </button>
+              </div>
+            </section>
+
+            <section class="review-complete" id="completeStage" aria-labelledby="completeTitle" hidden>
+              <div class="complete-mark" aria-hidden="true">✓</div>
+              <div>
+                <p class="section-kicker">Endroit terminé</p>
+                <h2 id="completeTitle"><span id="completeRoom">Cuisine</span>, c’est fait.</h2>
+                <p id="completeSummary">Tous les produits ont été vérifiés.</p>
+              </div>
+              <div class="complete-actions">
+                <button class="button button-dark" id="chooseAnotherLocationButton" type="button">Choisir un autre endroit</button>
+                <button class="button button-quiet" id="restartLocationButton" type="button">Recommencer cet endroit</button>
+              </div>
+            </section>
           </div>
 
           <aside class="list-panel" aria-labelledby="listTitle">
@@ -199,6 +223,17 @@
             </div>
           </form>
         </div>
+
+        <section class="product-library" aria-labelledby="libraryTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Catalogue</p>
+              <h2 id="libraryTitle">Références enregistrées</h2>
+            </div>
+            <span id="libraryCount"></span>
+          </div>
+          <div class="manage-product-list" id="manageProductList"></div>
+        </section>
       </section>
     </div>
 
