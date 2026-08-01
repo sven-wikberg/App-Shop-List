@@ -105,11 +105,12 @@ const DEFAULT_PRODUCTS = [
 
 const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd", "#e1dced"];
 const DEFAULT_PRODUCT_IMAGE = "assets/product-placeholder.png";
+const FIXED_RECIPIENT = "svenwikberg@gmail.com";
 
 const state = {
   products: loadJSON(STORAGE_KEYS.products, DEFAULT_PRODUCTS),
   needed: new Set(loadJSON(STORAGE_KEYS.needed, [])),
-  settings: loadJSON(STORAGE_KEYS.settings, { email: "", subject: "Ma liste de courses" }),
+  settings: loadJSON(STORAGE_KEYS.settings, { subject: "Ma liste de courses" }),
   reviewCategory: "",
   reviewQueue: [],
   reviewIndex: 0,
@@ -143,7 +144,6 @@ const elements = {
   libraryCount: document.querySelector("#libraryCount"),
   settingsDialog: document.querySelector("#settingsDialog"),
   settingsForm: document.querySelector("#settingsForm"),
-  settingsEmail: document.querySelector("#settingsEmail"),
   settingsSubject: document.querySelector("#settingsSubject"),
   categorySuggestions: document.querySelector("#categorySuggestions"),
   toast: document.querySelector("#toast"),
@@ -506,9 +506,8 @@ function buildListText() {
 
 function prepareEmail() {
   if (!selectedProducts().length) return;
-  const recipient = state.settings.email || "";
   const subject = state.settings.subject || "Ma liste de courses";
-  const href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildListText())}`;
+  const href = `mailto:${FIXED_RECIPIENT}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildListText())}`;
   window.location.href = href;
 }
 
@@ -530,7 +529,6 @@ async function copyList() {
 }
 
 function openSettings() {
-  elements.settingsEmail.value = state.settings.email || "";
   elements.settingsSubject.value = state.settings.subject || "Ma liste de courses";
   elements.settingsDialog.showModal();
 }
@@ -650,7 +648,6 @@ elements.productForm.addEventListener("submit", handleProductSubmit);
 elements.settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   state.settings = {
-    email: elements.settingsEmail.value.trim(),
     subject: elements.settingsSubject.value.trim() || "Ma liste de courses",
   };
   saveJSON(STORAGE_KEYS.settings, state.settings);
