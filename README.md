@@ -10,6 +10,7 @@ Ouvrir simplement `index.html` dans un navigateur récent.
 - Les cartes peuvent aussi être glissées à gauche ou à droite, comme une liste « Tinder ».
 - Utiliser l’onglet **Mes produits** pour créer ou modifier les références, le minimum à garder en stock et la quantité habituelle à acheter.
 - Ajouter, renommer ou supprimer les endroits et catégories depuis le gestionnaire du même onglet.
+- Télécharger une sauvegarde locale au format JSON et la restaurer depuis l’onglet **Mes produits**.
 - Cliquer sur **Partager ma liste** pour choisir Messages, WhatsApp, Notes ou une autre application du téléphone.
 - Si le partage natif n’est pas disponible, la liste est copiée automatiquement.
 

@@ -224,6 +224,8 @@ const elements = {
   categorySubmitLabel: document.querySelector("#categorySubmitLabel"),
   cancelCategoryButton: document.querySelector("#cancelCategoryButton"),
   categoryList: document.querySelector("#categoryList"),
+  exportBackupButton: document.querySelector("#exportBackupButton"),
+  backupFileInput: document.querySelector("#backupFileInput"),
   manageProductList: document.querySelector("#manageProductList"),
   libraryCount: document.querySelector("#libraryCount"),
   toast: document.querySelector("#toast"),
@@ -363,6 +365,88 @@ function handleCategorySubmit(event) {
   resetCategoryForm();
   render();
   showToast(originalName ? "Catégorie modifiée" : "Catégorie ajoutée");
+}
+
+function exportBackup() {
+  const backup = {
+    app: "juste-ce-quil-faut",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    categories: state.categories,
+    products: state.products,
+    needed: [...state.needed],
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+  link.href = url;
+  link.download = `juste-ce-quil-faut-sauvegarde-${date}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast("Sauvegarde téléchargée");
+}
+
+function validateBackupProduct(product) {
+  if (!product || typeof product !== "object") throw new Error("Produit invalide");
+  const name = String(product.name || "").trim();
+  const category = String(product.category || "").trim();
+  if (!name || !category) throw new Error("Produit incomplet");
+  return {
+    id: String(product.id || makeId(name)),
+    name,
+    brand: String(product.brand || "").trim(),
+    detail: String(product.detail || "").trim(),
+    format: String(product.format || "").trim(),
+    category,
+    minimumStock: Math.max(0, Number.parseInt(product.minimumStock, 10) || 0),
+    quantity: Math.max(1, Number.parseInt(product.quantity, 10) || 1),
+    icon: String(product.icon || "📦"),
+    image: typeof product.image === "string" ? product.image : DEFAULT_PRODUCT_IMAGE,
+    accent: /^#[0-9a-f]{6}$/i.test(product.accent || "") ? product.accent : CATEGORY_ACCENTS[0],
+  };
+}
+
+async function restoreBackup(file) {
+  try {
+    const backup = JSON.parse(await file.text());
+    if (backup?.app !== "juste-ce-quil-faut" || !Array.isArray(backup.products) || !Array.isArray(backup.categories)) {
+      throw new Error("Format de sauvegarde inconnu");
+    }
+    const products = backup.products.map(validateBackupProduct);
+    const categories = [
+      ...new Set([
+        ...backup.categories.map((category) => String(category).trim()).filter(Boolean),
+        ...products.map((product) => product.category),
+      ]),
+    ];
+    const productIds = new Set(products.map((product) => product.id));
+    const needed = Array.isArray(backup.needed)
+      ? backup.needed.filter((id) => productIds.has(String(id))).map(String)
+      : [];
+
+    if (!window.confirm(`Restaurer ${products.length} produit${products.length > 1 ? "s" : ""} ? Les données actuelles seront remplacées.`)) {
+      return;
+    }
+
+    state.products = products;
+    state.categories = categories;
+    state.needed = new Set(needed);
+    state.completedCategories.clear();
+    saveJSON(STORAGE_KEYS.products, state.products);
+    persistCategories();
+    persistNeeded();
+    resetCategoryForm();
+    render();
+    goToHome();
+    showToast("Sauvegarde restaurée");
+  } catch {
+    window.alert("Ce fichier ne semble pas être une sauvegarde valide de l’application.");
+  } finally {
+    elements.backupFileInput.value = "";
+  }
 }
 
 function accentFor(product) {
@@ -847,6 +931,11 @@ elements.categoryList.addEventListener("click", (event) => {
   const category = row.dataset.categoryName;
   if (action === "edit") editCategory(category);
   if (action === "delete") deleteCategory(category);
+});
+elements.exportBackupButton.addEventListener("click", exportBackup);
+elements.backupFileInput.addEventListener("change", (event) => {
+  const [file] = event.target.files;
+  if (file) restoreBackup(file);
 });
 
 state.needed = new Set([...state.needed].filter((id) => state.products.some((product) => product.id === id)));

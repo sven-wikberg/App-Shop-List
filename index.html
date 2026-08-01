@@ -253,6 +253,20 @@
           <div class="category-list" id="categoryList"></div>
         </section>
 
+        <section class="backup-panel" aria-labelledby="backupTitle">
+          <div class="backup-icon" aria-hidden="true">↓</div>
+          <div class="backup-copy">
+            <p class="section-kicker">Sauvegarde locale</p>
+            <h2 id="backupTitle">Gardez une copie de vos données.</h2>
+            <p>Le fichier contient vos produits, catégories, minimums de stock et la liste en cours.</p>
+          </div>
+          <div class="backup-actions">
+            <button class="button button-dark" id="exportBackupButton" type="button">Télécharger une sauvegarde</button>
+            <label class="button button-quiet" for="backupFileInput">Restaurer un fichier</label>
+            <input id="backupFileInput" type="file" accept="application/json,.json" hidden />
+          </div>
+        </section>
+
         <section class="product-library" aria-labelledby="libraryTitle">
           <div class="panel-heading">
             <div>
