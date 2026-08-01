@@ -1,11 +1,6 @@
 const STORAGE_KEYS = {
-  products: "juste-ce-quil-faut.products.v4",
-  needed: "juste-ce-quil-faut.needed.v4",
-};
-
-const LEGACY_STORAGE_KEYS = {
-  products: "juste-ce-quil-faut.products.v3",
-  needed: "juste-ce-quil-faut.needed.v3",
+  products: "juste-ce-quil-faut.products.v5",
+  needed: "juste-ce-quil-faut.needed.v5",
 };
 
 const DEFAULT_PRODUCTS = [
@@ -161,19 +156,13 @@ function normalizeProducts(products) {
 }
 
 function loadInitialProducts() {
-  const currentProducts = loadJSON(STORAGE_KEYS.products, null);
-  if (Array.isArray(currentProducts)) return normalizeProducts(currentProducts);
-  const previousProducts = loadJSON(LEGACY_STORAGE_KEYS.products, null);
-  const baseProducts = Array.isArray(previousProducts) ? previousProducts : DEFAULT_PRODUCTS;
-  const existingIds = new Set(baseProducts.map((product) => product.id));
-  return normalizeProducts([...baseProducts, ...CLOTHING_EXAMPLES.filter((product) => !existingIds.has(product.id))]);
+  const products = loadJSON(STORAGE_KEYS.products, []);
+  return Array.isArray(products) ? normalizeProducts(products) : [];
 }
 
 function loadInitialNeeded() {
-  const currentNeeded = loadJSON(STORAGE_KEYS.needed, null);
-  if (Array.isArray(currentNeeded)) return currentNeeded;
-  const previousNeeded = loadJSON(LEGACY_STORAGE_KEYS.needed, []);
-  return Array.isArray(previousNeeded) ? previousNeeded : [];
+  const needed = loadJSON(STORAGE_KEYS.needed, []);
+  return Array.isArray(needed) ? needed : [];
 }
 
 const state = {
