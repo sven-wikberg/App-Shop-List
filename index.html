@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Une liste de courses personnelle fondée sur vos références habituelles."
+    />
+    <meta name="theme-color" content="#f4efe5" />
+    <title>Juste ce qu’il faut</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Juste ce qu’il faut — accueil">
+          <span class="brand-mark" aria-hidden="true">J</span>
+          <span>
+            <strong>Juste ce qu’il faut</strong>
+            <small>Le pense-bête du placard</small>
+          </span>
+        </a>
+
+        <div class="topbar-actions">
+          <button class="button button-quiet" id="settingsButton" type="button">
+            <span aria-hidden="true">✉</span>
+            <span class="button-label">E-mail</span>
+          </button>
+          <button class="button button-dark" id="addProductButton" type="button">
+            <span aria-hidden="true">＋</span>
+            <span>Ajouter un produit</span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="pageTitle">
+          <div>
+            <p class="eyebrow">Vérification du placard</p>
+            <h1 id="pageTitle">Le bon produit.<br />La bonne quantité.</h1>
+            <p class="hero-copy">
+              Faites le tour de la maison et indiquez simplement ce qu’il faut racheter.
+              Vos références et quantités habituelles sont déjà prêtes.
+            </p>
+          </div>
+          <div class="hero-note" aria-label="Mode d’emploi">
+            <span class="note-number">01</span>
+            <p>Cliquez sur <strong>« Il en faut »</strong> pour ajouter un produit à la liste.</p>
+          </div>
+        </section>
+
+        <section class="workspace" aria-label="Gestion des produits">
+          <div class="inventory-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">Mes références</p>
+                <h2>Dans la maison</h2>
+              </div>
+              <div class="inventory-count" id="inventoryCount" aria-live="polite"></div>
+            </div>
+
+            <div class="toolbar">
+              <label class="search-box" for="searchInput">
+                <span aria-hidden="true">⌕</span>
+                <input
+                  id="searchInput"
+                  type="search"
+                  placeholder="Rechercher une marque, un produit…"
+                  autocomplete="off"
+                />
+              </label>
+              <div class="category-tabs" id="categoryTabs" aria-label="Filtrer par endroit"></div>
+            </div>
+
+            <div class="product-grid" id="productGrid"></div>
+            <div class="empty-products" id="emptyProducts" hidden>
+              <span aria-hidden="true">⌕</span>
+              <h3>Aucun produit trouvé</h3>
+              <p>Essayez une autre recherche ou ajoutez une nouvelle référence.</p>
+            </div>
+          </div>
+
+          <aside class="list-panel" aria-labelledby="listTitle">
+            <div class="list-heading">
+              <div>
+                <p class="section-kicker">Prête à envoyer</p>
+                <h2 id="listTitle">Ma liste</h2>
+              </div>
+              <span class="list-count" id="listCount">0</span>
+            </div>
+
+            <div class="shopping-list" id="shoppingList" aria-live="polite"></div>
+
+            <div class="list-empty" id="listEmpty">
+              <div class="empty-basket" aria-hidden="true">✓</div>
+              <p>Rien ne manque pour l’instant.</p>
+              <span>Les produits sélectionnés apparaîtront ici.</span>
+            </div>
+
+            <div class="list-actions">
+              <button class="button button-email" id="emailListButton" type="button" disabled>
+                <span aria-hidden="true">↗</span>
+                Préparer l’e-mail
+              </button>
+              <button class="text-button" id="copyListButton" type="button" disabled>
+                Copier la liste
+              </button>
+              <button class="text-button text-button-muted" id="clearListButton" type="button" disabled>
+                Tout décocher
+              </button>
+            </div>
+            <p class="email-hint" id="emailHint">Le destinataire peut être configuré en haut de la page.</p>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="modal" id="productDialog" aria-labelledby="productDialogTitle">
+      <form class="modal-card" id="productForm">
+        <div class="modal-header">
+          <div>
+            <p class="section-kicker">Référence personnelle</p>
+            <h2 id="productDialogTitle">Ajouter un produit</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="productDialog" aria-label="Fermer">×</button>
+        </div>
+
+        <input id="productId" type="hidden" />
+        <input id="productImageData" type="hidden" />
+
+        <div class="form-grid">
+          <label class="field field-wide">
+            <span>Nom du produit *</span>
+            <input id="productName" name="name" required maxlength="70" placeholder="Ex. Liquide vaisselle" />
+          </label>
+          <label class="field">
+            <span>Marque</span>
+            <input id="productBrand" name="brand" maxlength="60" placeholder="Ex. Rainett" />
+          </label>
+          <label class="field">
+            <span>Référence / variante</span>
+            <input id="productDetail" name="detail" maxlength="80" placeholder="Ex. Citron vert" />
+          </label>
+          <label class="field">
+            <span>Format</span>
+            <input id="productFormat" name="format" maxlength="40" placeholder="Ex. 500 ml" />
+          </label>
+          <label class="field">
+            <span>Endroit</span>
+            <input id="productCategory" name="category" list="categorySuggestions" required maxlength="40" placeholder="Ex. Cuisine" />
+            <datalist id="categorySuggestions"></datalist>
+          </label>
+          <label class="field">
+            <span>Quantité à acheter *</span>
+            <input id="productQuantity" name="quantity" type="number" required min="1" max="99" value="1" inputmode="numeric" />
+          </label>
+          <label class="field">
+            <span>Petit repère</span>
+            <input id="productIcon" name="icon" maxlength="4" value="🧺" aria-describedby="iconHelp" />
+            <small id="iconHelp">Un emoji pour le reconnaître rapidement.</small>
+          </label>
+          <div class="field field-wide photo-field">
+            <span>Photo du produit</span>
+            <div class="photo-control">
+              <div class="photo-preview" id="photoPreview" aria-label="Aperçu de la photo"><span>🧺</span></div>
+              <div>
+                <label class="button button-quiet upload-button" for="productImage">Choisir une photo</label>
+                <input id="productImage" type="file" accept="image/*" hidden />
+                <button class="text-button" id="removePhotoButton" type="button">Retirer la photo</button>
+                <p>La photo reste uniquement sur cet appareil.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="button button-quiet" type="button" data-close-dialog="productDialog">Annuler</button>
+          <button class="button button-dark" type="submit">Enregistrer le produit</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal modal-small" id="settingsDialog" aria-labelledby="settingsDialogTitle">
+      <form class="modal-card" id="settingsForm">
+        <div class="modal-header">
+          <div>
+            <p class="section-kicker">Envoi de la liste</p>
+            <h2 id="settingsDialogTitle">Préparer l’e-mail</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="settingsDialog" aria-label="Fermer">×</button>
+        </div>
+        <p class="modal-intro">
+          L’application ouvrira votre logiciel de messagerie avec la liste déjà rédigée.
+        </p>
+        <div class="form-grid one-column">
+          <label class="field">
+            <span>Adresse destinataire</span>
+            <input id="settingsEmail" type="email" placeholder="vous@exemple.fr" autocomplete="email" />
+            <small>Facultatif : vous pourrez aussi choisir le destinataire au moment de l’envoi.</small>
+          </label>
+          <label class="field">
+            <span>Objet de l’e-mail</span>
+            <input id="settingsSubject" maxlength="100" value="Ma liste de courses" />
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button class="button button-quiet" type="button" data-close-dialog="settingsDialog">Annuler</button>
+          <button class="button button-dark" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
