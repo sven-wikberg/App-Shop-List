@@ -134,16 +134,39 @@ const CLOTHING_EXAMPLES = [
   },
 ];
 
+const DEFAULT_MINIMUM_STOCK = {
+  "liquide-vaisselle": 1,
+  eponges: 1,
+  "papier-cuisson": 1,
+  "savon-mains": 1,
+  dentifrice: 1,
+  lessive: 1,
+  "sacs-poubelle": 1,
+  "papier-toilette": 1,
+  "chaussettes-noires": 6,
+  "boxers-noirs": 5,
+};
+
 const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd", "#e1dced"];
 const DEFAULT_PRODUCT_IMAGE = "assets/product-placeholder.png";
 
+function normalizeProducts(products) {
+  return products.map((product) => ({
+    ...product,
+    minimumStock:
+      product.minimumStock === undefined
+        ? DEFAULT_MINIMUM_STOCK[product.id] ?? 1
+        : Math.max(0, Number.parseInt(product.minimumStock, 10) || 0),
+  }));
+}
+
 function loadInitialProducts() {
   const currentProducts = loadJSON(STORAGE_KEYS.products, null);
-  if (Array.isArray(currentProducts)) return currentProducts;
+  if (Array.isArray(currentProducts)) return normalizeProducts(currentProducts);
   const previousProducts = loadJSON(LEGACY_STORAGE_KEYS.products, null);
   const baseProducts = Array.isArray(previousProducts) ? previousProducts : DEFAULT_PRODUCTS;
   const existingIds = new Set(baseProducts.map((product) => product.id));
-  return [...baseProducts, ...CLOTHING_EXAMPLES.filter((product) => !existingIds.has(product.id))];
+  return normalizeProducts([...baseProducts, ...CLOTHING_EXAMPLES.filter((product) => !existingIds.has(product.id))]);
 }
 
 function loadInitialNeeded() {
@@ -309,7 +332,7 @@ function renderManageProducts() {
                 <strong>${escapeHTML(product.name)}</strong>
                 <small>${escapeHTML(referenceLine(product))}</small>
               </div>
-              <strong class="manage-product-quantity">×${product.quantity}</strong>
+              <strong class="manage-product-quantity">min. ${product.minimumStock} · +${product.quantity}</strong>
               <div class="manage-product-actions">
                 <button class="mini-button" type="button" data-manage-action="edit" aria-label="Modifier ${escapeHTML(product.name)}">✎</button>
                 <button class="mini-button" type="button" data-manage-action="delete" aria-label="Supprimer ${escapeHTML(product.name)}">×</button>
@@ -362,9 +385,15 @@ function renderReviewCard() {
         <p class="product-category">Référence ${current}/${total}</p>
         <h3>${escapeHTML(product.name)}</h3>
         <p class="swipe-reference">${escapeHTML(referenceLine(product))}</p>
-        <div class="swipe-quantity">
-          <span>Quantité à acheter</span>
-          <strong>${product.quantity}</strong>
+        <div class="swipe-stock-rules">
+          <div>
+            <span>Minimum en stock</span>
+            <strong>${product.minimumStock}</strong>
+          </div>
+          <div>
+            <span>À acheter si besoin</span>
+            <strong>${product.quantity}</strong>
+          </div>
         </div>
       </div>
     </article>`;
@@ -474,6 +503,7 @@ function openProductForm(product = null) {
   document.querySelector("#productDetail").value = product?.detail || "";
   document.querySelector("#productFormat").value = product?.format || "";
   document.querySelector("#productCategory").value = product?.category || "Cuisine";
+  document.querySelector("#productMinimumStock").value = product?.minimumStock ?? 1;
   document.querySelector("#productQuantity").value = product?.quantity || 1;
   elements.productFormTitle.textContent = product ? "Modifier le produit" : "Créer un produit";
   elements.productSubmitLabel.textContent = product ? "Enregistrer les modifications" : "Créer le produit";
@@ -500,6 +530,7 @@ function handleProductSubmit(event) {
     detail: document.querySelector("#productDetail").value.trim(),
     format: document.querySelector("#productFormat").value.trim(),
     category,
+    minimumStock: Math.max(0, Number.parseInt(document.querySelector("#productMinimumStock").value, 10) || 0),
     quantity: Math.max(1, Number.parseInt(document.querySelector("#productQuantity").value, 10) || 1),
     icon: existingProduct?.icon || "📦",
     image: existingProduct?.image || DEFAULT_PRODUCT_IMAGE,

@@ -572,21 +572,32 @@ a:focus-visible {
   font-size: 13px;
 }
 
-.swipe-quantity {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+.swipe-stock-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
   padding-top: 15px;
   border-top: 1px solid var(--line);
 }
 
-.swipe-quantity span {
-  color: var(--muted);
-  font-size: 11px;
+.swipe-stock-rules > div {
+  display: grid;
+  gap: 5px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: var(--paper);
 }
 
-.swipe-quantity strong {
+.swipe-stock-rules > div:last-child {
+  background: var(--green-soft);
+}
+
+.swipe-stock-rules span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.swipe-stock-rules strong {
   font: 700 25px/1 Georgia, "Times New Roman", serif;
 }
 
@@ -1339,6 +1350,17 @@ a:focus-visible {
   font-weight: 800;
 }
 
+.stock-fields {
+  max-width: 470px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.stock-fields .quantity-field {
+  max-width: none;
+}
+
 .product-form-footer {
   display: flex;
   align-items: center;
@@ -1879,6 +1901,11 @@ a:focus-visible {
 
   .product-form-footer .button {
     width: 100%;
+  }
+
+  .stock-fields {
+    max-width: none;
+    grid-template-columns: 1fr;
   }
 
   .flow-heading {

@@ -207,15 +207,23 @@
             <div class="form-section-heading second-step">
               <div>
                 <span class="form-step">02</span>
-                <h2>Définir l’achat</h2>
+                <h2>Définir le stock</h2>
               </div>
-              <p>Combien faut-il en acheter lorsque ce produit manque ?</p>
+              <p>Le minimum à garder et la quantité à racheter lorsqu’il en manque.</p>
             </div>
 
-            <label class="field quantity-field">
-              <span>Quantité à acheter *</span>
-              <input id="productQuantity" name="quantity" type="number" required min="1" max="99" value="1" inputmode="numeric" />
-            </label>
+            <div class="stock-fields">
+              <label class="field quantity-field">
+                <span>Minimum à garder en stock *</span>
+                <input id="productMinimumStock" name="minimumStock" type="number" required min="0" max="99" value="1" inputmode="numeric" />
+                <small>Le repère à vérifier dans le placard.</small>
+              </label>
+              <label class="field quantity-field">
+                <span>Quantité à acheter *</span>
+                <input id="productQuantity" name="quantity" type="number" required min="1" max="99" value="1" inputmode="numeric" />
+                <small>Ce qui sera ajouté à la liste.</small>
+              </label>
+            </div>
 
             <div class="product-form-footer">
               <button class="button button-quiet" id="cancelProductButton" type="button">Annuler</button>
