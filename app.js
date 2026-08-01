@@ -2,6 +2,7 @@ const STORAGE_KEYS = {
   products: "juste-ce-quil-faut.products.v5",
   needed: "juste-ce-quil-faut.needed.v5",
   categories: "juste-ce-quil-faut.categories.v1",
+  internalBackup: "juste-ce-quil-faut.internal-backup.v1",
 };
 
 const DEFAULT_CATEGORIES = [
@@ -224,8 +225,8 @@ const elements = {
   categorySubmitLabel: document.querySelector("#categorySubmitLabel"),
   cancelCategoryButton: document.querySelector("#cancelCategoryButton"),
   categoryList: document.querySelector("#categoryList"),
-  saveRepositoryBackupButton: document.querySelector("#saveRepositoryBackupButton"),
-  loadRepositoryBackupButton: document.querySelector("#loadRepositoryBackupButton"),
+  saveInternalBackupButton: document.querySelector("#saveInternalBackupButton"),
+  loadInternalBackupButton: document.querySelector("#loadInternalBackupButton"),
   exportBackupButton: document.querySelector("#exportBackupButton"),
   backupFileInput: document.querySelector("#backupFileInput"),
   manageProductList: document.querySelector("#manageProductList"),
@@ -459,31 +460,23 @@ async function restoreBackup(file) {
   }
 }
 
-function showRepositoryBackupHelp() {
-  window.alert("Pour utiliser la sauvegarde intégrée au dossier, lancez l’application avec start_app.bat.");
-}
-
-async function saveRepositoryBackup() {
-  try {
-    const response = await fetch("/api/backup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(createBackupData()),
-    });
-    if (!response.ok) throw new Error("Sauvegarde impossible");
-    showToast("Sauvegarde enregistrée dans le dossier");
-  } catch {
-    showRepositoryBackupHelp();
+function saveInternalBackup() {
+  if (saveJSON(STORAGE_KEYS.internalBackup, createBackupData())) {
+    showToast("Sauvegarde interne enregistrée");
   }
 }
 
-async function loadRepositoryBackup() {
+function loadInternalBackup() {
+  const backup = loadJSON(STORAGE_KEYS.internalBackup, null);
+  if (!backup) {
+    window.alert("Aucune sauvegarde interne n’a encore été créée.");
+    return;
+  }
+
   try {
-    const response = await fetch("/api/backup", { cache: "no-store" });
-    if (!response.ok) throw new Error("Sauvegarde introuvable");
-    applyBackup(await response.json());
+    applyBackup(backup);
   } catch {
-    showRepositoryBackupHelp();
+    window.alert("La sauvegarde interne est illisible.");
   }
 }
 
@@ -970,8 +963,8 @@ elements.categoryList.addEventListener("click", (event) => {
   if (action === "edit") editCategory(category);
   if (action === "delete") deleteCategory(category);
 });
-elements.saveRepositoryBackupButton.addEventListener("click", saveRepositoryBackup);
-elements.loadRepositoryBackupButton.addEventListener("click", loadRepositoryBackup);
+elements.saveInternalBackupButton.addEventListener("click", saveInternalBackup);
+elements.loadInternalBackupButton.addEventListener("click", loadInternalBackup);
 elements.exportBackupButton.addEventListener("click", exportBackup);
 elements.backupFileInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
