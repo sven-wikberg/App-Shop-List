@@ -1,6 +1,6 @@
 const STORAGE_KEYS = {
-  products: "juste-ce-quil-faut.products.v1",
-  needed: "juste-ce-quil-faut.needed.v1",
+  products: "juste-ce-quil-faut.products.v2",
+  needed: "juste-ce-quil-faut.needed.v2",
   settings: "juste-ce-quil-faut.settings.v1",
 };
 
@@ -106,7 +106,7 @@ const DEFAULT_PRODUCTS = [
 const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd", "#e1dced"];
 
 const state = {
-  products: loadJSON(STORAGE_KEYS.products, DEFAULT_PRODUCTS),
+  products: loadJSON(STORAGE_KEYS.products, []),
   needed: new Set(loadJSON(STORAGE_KEYS.needed, [])),
   settings: loadJSON(STORAGE_KEYS.settings, { email: "", subject: "Ma liste de courses" }),
   activeCategory: "Tous",
