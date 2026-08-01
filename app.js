@@ -1,7 +1,18 @@
 const STORAGE_KEYS = {
   products: "juste-ce-quil-faut.products.v5",
   needed: "juste-ce-quil-faut.needed.v5",
+  categories: "juste-ce-quil-faut.categories.v1",
 };
+
+const DEFAULT_CATEGORIES = [
+  "Cuisine",
+  "Salle de bain",
+  "Toilettes",
+  "Buanderie",
+  "Entretien",
+  "Vêtements à renouveler",
+  "Autre",
+];
 
 const DEFAULT_PRODUCTS = [
   {
@@ -168,6 +179,7 @@ function loadInitialNeeded() {
 const state = {
   products: loadInitialProducts(),
   needed: new Set(loadInitialNeeded()),
+  categories: loadJSON(STORAGE_KEYS.categories, DEFAULT_CATEGORIES),
   reviewCategory: "",
   reviewQueue: [],
   reviewIndex: 0,
@@ -175,6 +187,13 @@ const state = {
   decisionLocked: false,
   decisionTimer: null,
 };
+
+state.categories = [
+  ...new Set([
+    ...(Array.isArray(state.categories) ? state.categories : DEFAULT_CATEGORIES),
+    ...state.products.map((product) => product.category).filter(Boolean),
+  ]),
+];
 
 const elements = {
   shoppingList: document.querySelector("#shoppingList"),
@@ -199,6 +218,12 @@ const elements = {
   productForm: document.querySelector("#productForm"),
   productFormTitle: document.querySelector("#productFormTitle"),
   productSubmitLabel: document.querySelector("#productSubmitLabel"),
+  categoryForm: document.querySelector("#categoryForm"),
+  categoryName: document.querySelector("#categoryName"),
+  categoryOriginalName: document.querySelector("#categoryOriginalName"),
+  categorySubmitLabel: document.querySelector("#categorySubmitLabel"),
+  cancelCategoryButton: document.querySelector("#cancelCategoryButton"),
+  categoryList: document.querySelector("#categoryList"),
   manageProductList: document.querySelector("#manageProductList"),
   libraryCount: document.querySelector("#libraryCount"),
   toast: document.querySelector("#toast"),
@@ -243,6 +268,101 @@ function getCategories() {
   return [...new Set(state.products.map((product) => product.category).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, "fr")
   );
+}
+
+function renderCategoryOptions() {
+  const select = document.querySelector("#productCategory");
+  const currentValue = select.value;
+  select.innerHTML = `
+    <option value="" disabled>Choisir un endroit</option>
+    ${state.categories.map((category) => `<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`).join("")}`;
+  if (state.categories.includes(currentValue)) select.value = currentValue;
+}
+
+function renderCategoryManager() {
+  elements.categoryList.innerHTML = state.categories.length
+    ? state.categories
+        .map((category) => {
+          const productCount = state.products.filter((product) => product.category === category).length;
+          return `
+            <div class="category-row" data-category-name="${escapeHTML(category)}">
+              <span class="category-row-icon" aria-hidden="true">${roomIcon(category)}</span>
+              <div>
+                <strong>${escapeHTML(category)}</strong>
+                <small>${productCount} produit${productCount > 1 ? "s" : ""}</small>
+              </div>
+              <div class="category-row-actions">
+                <button class="mini-button" type="button" data-category-action="edit" aria-label="Modifier ${escapeHTML(category)}">✎</button>
+                <button class="mini-button" type="button" data-category-action="delete" aria-label="Supprimer ${escapeHTML(category)}">×</button>
+              </div>
+            </div>`;
+        })
+        .join("")
+    : `<div class="manage-empty">Aucune catégorie. Ajoutez-en une pour créer un produit.</div>`;
+}
+
+function persistCategories() {
+  saveJSON(STORAGE_KEYS.categories, state.categories);
+}
+
+function resetCategoryForm() {
+  elements.categoryForm.reset();
+  elements.categoryOriginalName.value = "";
+  elements.categorySubmitLabel.textContent = "Ajouter";
+  elements.cancelCategoryButton.hidden = true;
+}
+
+function editCategory(category) {
+  elements.categoryOriginalName.value = category;
+  elements.categoryName.value = category;
+  elements.categorySubmitLabel.textContent = "Enregistrer";
+  elements.cancelCategoryButton.hidden = false;
+  elements.categoryName.focus();
+}
+
+function deleteCategory(category) {
+  const productCount = state.products.filter((product) => product.category === category).length;
+  if (productCount) {
+    window.alert(`Cette catégorie contient ${productCount} produit${productCount > 1 ? "s" : ""}. Déplacez-les avant de la supprimer.`);
+    return;
+  }
+  if (!window.confirm(`Supprimer la catégorie « ${category} » ?`)) return;
+  state.categories = state.categories.filter((item) => item !== category);
+  state.completedCategories.delete(category);
+  persistCategories();
+  resetCategoryForm();
+  render();
+  showToast("Catégorie supprimée");
+}
+
+function handleCategorySubmit(event) {
+  event.preventDefault();
+  const name = elements.categoryName.value.trim().replace(/\s+/g, " ");
+  const originalName = elements.categoryOriginalName.value;
+  if (!name) return;
+  const duplicate = state.categories.some(
+    (category) => normalize(category) === normalize(name) && category !== originalName
+  );
+  if (duplicate) {
+    showToast("Cette catégorie existe déjà");
+    return;
+  }
+
+  if (originalName) {
+    state.categories = state.categories.map((category) => (category === originalName ? name : category));
+    state.products = state.products.map((product) =>
+      product.category === originalName ? { ...product, category: name } : product
+    );
+    state.completedCategories.delete(originalName);
+    saveJSON(STORAGE_KEYS.products, state.products);
+  } else {
+    state.categories.push(name);
+  }
+
+  persistCategories();
+  resetCategoryForm();
+  render();
+  showToast(originalName ? "Catégorie modifiée" : "Catégorie ajoutée");
 }
 
 function accentFor(product) {
@@ -461,6 +581,8 @@ function renderList() {
 }
 
 function render() {
+  renderCategoryOptions();
+  renderCategoryManager();
   renderLocations();
   renderManageProducts();
   renderList();
@@ -716,8 +838,19 @@ elements.clearListButton.addEventListener("click", () => {
 });
 
 elements.productForm.addEventListener("submit", handleProductSubmit);
+elements.categoryForm.addEventListener("submit", handleCategorySubmit);
+elements.cancelCategoryButton.addEventListener("click", resetCategoryForm);
+elements.categoryList.addEventListener("click", (event) => {
+  const row = event.target.closest("[data-category-name]");
+  const action = event.target.closest("[data-category-action]")?.dataset.categoryAction;
+  if (!row || !action) return;
+  const category = row.dataset.categoryName;
+  if (action === "edit") editCategory(category);
+  if (action === "delete") deleteCategory(category);
+});
 
 state.needed = new Set([...state.needed].filter((id) => state.products.some((product) => product.id === id)));
 saveJSON(STORAGE_KEYS.products, state.products);
 persistNeeded();
+persistCategories();
 render();

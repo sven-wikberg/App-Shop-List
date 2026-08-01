@@ -201,13 +201,6 @@
                 <span>Endroit *</span>
                 <select id="productCategory" name="category" required>
                   <option value="" disabled>Choisir un endroit</option>
-                  <option value="Cuisine">Cuisine</option>
-                  <option value="Salle de bain">Salle de bain</option>
-                  <option value="Toilettes">Toilettes</option>
-                  <option value="Buanderie">Buanderie</option>
-                  <option value="Entretien">Entretien</option>
-                  <option value="Vêtements à renouveler">Vêtements à renouveler</option>
-                  <option value="Autre">Autre</option>
                 </select>
               </label>
             </div>
@@ -239,6 +232,26 @@
             </div>
           </form>
         </div>
+
+        <section class="category-library" aria-labelledby="categoryManagerTitle">
+          <div class="category-manager-copy">
+            <p class="section-kicker">Organisation</p>
+            <h2 id="categoryManagerTitle">Endroits et catégories</h2>
+            <p>Créez les catégories proposées dans le formulaire des produits.</p>
+          </div>
+          <form class="category-form" id="categoryForm">
+            <input id="categoryOriginalName" type="hidden" />
+            <label class="field">
+              <span>Nom de la catégorie</span>
+              <input id="categoryName" required maxlength="40" placeholder="Ex. Garage" autocomplete="off" />
+            </label>
+            <div class="category-form-actions">
+              <button class="button button-quiet" id="cancelCategoryButton" type="button" hidden>Annuler</button>
+              <button class="button button-dark" type="submit"><span id="categorySubmitLabel">Ajouter</span> →</button>
+            </div>
+          </form>
+          <div class="category-list" id="categoryList"></div>
+        </section>
 
         <section class="product-library" aria-labelledby="libraryTitle">
           <div class="panel-heading">

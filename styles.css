@@ -1373,6 +1373,107 @@ a:focus-visible {
   border-top: 1px solid var(--line);
 }
 
+.category-library {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1.35fr);
+  gap: 24px 34px;
+  margin-top: 22px;
+  padding: 30px;
+  border: 1px solid #dfc2b2;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #fff9f3, #f7e5da);
+  box-shadow: var(--shadow);
+}
+
+.category-manager-copy h2 {
+  margin: 0;
+  font: 500 30px/1.1 Georgia, "Times New Roman", serif;
+  letter-spacing: -0.025em;
+}
+
+.category-manager-copy > p:last-child {
+  max-width: 350px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.category-form {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  padding: 17px;
+  border: 1px solid rgba(216, 208, 195, 0.9);
+  border-radius: 16px;
+  background: rgba(255, 253, 248, 0.82);
+}
+
+.category-form .field {
+  flex: 1;
+}
+
+.category-form-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.category-list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.category-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+}
+
+.category-row-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--paper-deep);
+  font-size: 19px;
+}
+
+.category-row > div:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.category-row strong,
+.category-row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-row strong {
+  font-size: 13px;
+}
+
+.category-row small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.category-row-actions {
+  display: flex;
+  gap: 1px;
+}
+
 .product-library {
   margin-top: 22px;
   padding: 30px;
@@ -1782,6 +1883,14 @@ a:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .category-library {
+    grid-template-columns: 1fr;
+  }
+
+  .category-list {
+    grid-template-columns: 1fr;
+  }
+
   .product-form-aside {
     position: static;
     display: grid;
@@ -1909,6 +2018,20 @@ a:focus-visible {
 
   .product-form-footer .button {
     width: 100%;
+  }
+
+  .category-library {
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .category-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .category-form-actions .button {
+    flex: 1;
   }
 
   .stock-fields {
