@@ -40,13 +40,15 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
 button,
 a,
-input {
+input,
+select {
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -1531,7 +1533,8 @@ a:focus-visible {
   font-weight: 800;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
@@ -1542,7 +1545,12 @@ a:focus-visible {
   background: #fffefa;
 }
 
-.field input:focus {
+.field select {
+  cursor: pointer;
+}
+
+.field input:focus,
+.field select:focus {
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(49, 89, 71, 0.11);
 }

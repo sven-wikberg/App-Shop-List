@@ -199,8 +199,16 @@
               </label>
               <label class="field">
                 <span>Endroit *</span>
-                <input id="productCategory" name="category" list="categorySuggestions" required maxlength="40" placeholder="Ex. Cuisine" />
-                <datalist id="categorySuggestions"></datalist>
+                <select id="productCategory" name="category" required>
+                  <option value="" disabled>Choisir un endroit</option>
+                  <option value="Cuisine">Cuisine</option>
+                  <option value="Salle de bain">Salle de bain</option>
+                  <option value="Toilettes">Toilettes</option>
+                  <option value="Buanderie">Buanderie</option>
+                  <option value="Entretien">Entretien</option>
+                  <option value="Vêtements à renouveler">Vêtements à renouveler</option>
+                  <option value="Autre">Autre</option>
+                </select>
               </label>
             </div>
 

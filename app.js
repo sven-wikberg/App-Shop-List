@@ -201,7 +201,6 @@ const elements = {
   productSubmitLabel: document.querySelector("#productSubmitLabel"),
   manageProductList: document.querySelector("#manageProductList"),
   libraryCount: document.querySelector("#libraryCount"),
-  categorySuggestions: document.querySelector("#categorySuggestions"),
   toast: document.querySelector("#toast"),
 };
 
@@ -254,12 +253,6 @@ function accentFor(product) {
 
 function referenceLine(product) {
   return [product.brand, product.detail, product.format].filter(Boolean).join(" · ") || "Référence à compléter";
-}
-
-function renderCategories() {
-  elements.categorySuggestions.innerHTML = getCategories()
-    .map((category) => `<option value="${escapeHTML(category)}"></option>`)
-    .join("");
 }
 
 function visualMarkup(product, className = "product-visual") {
@@ -468,7 +461,6 @@ function renderList() {
 }
 
 function render() {
-  renderCategories();
   renderLocations();
   renderManageProducts();
   renderList();
