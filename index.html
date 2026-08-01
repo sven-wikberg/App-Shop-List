@@ -32,9 +32,9 @@
               Mes produits
             </button>
           </nav>
-          <button class="button button-quiet" id="settingsButton" type="button">
-            <span aria-hidden="true">✉</span>
-            <span class="button-label">E-mail</span>
+          <button class="button button-quiet" id="shareTopButton" type="button" disabled>
+            <span aria-hidden="true">↗</span>
+            <span class="button-label">Partager</span>
           </button>
           <button class="button button-dark" id="addProductButton" type="button">
             <span aria-hidden="true">＋</span>
@@ -132,9 +132,9 @@
             </div>
 
             <div class="list-actions">
-              <button class="button button-email" id="emailListButton" type="button" disabled>
+              <button class="button button-share" id="shareListButton" type="button" disabled>
                 <span aria-hidden="true">↗</span>
-                Envoyer par e-mail
+                Partager ma liste
               </button>
               <button class="text-button" id="copyListButton" type="button" disabled>
                 Copier la liste
@@ -143,7 +143,7 @@
                 Tout décocher
               </button>
             </div>
-            <p class="email-hint" id="emailHint">La liste sera adressée à svenwikberg@gmail.com.</p>
+            <p class="share-hint">Choisissez Messages, WhatsApp, Notes ou toute autre application disponible.</p>
           </aside>
         </section>
       </main>
@@ -236,36 +236,6 @@
         </section>
       </section>
     </div>
-
-    <dialog class="modal modal-small" id="settingsDialog" aria-labelledby="settingsDialogTitle">
-      <form class="modal-card" id="settingsForm">
-        <div class="modal-header">
-          <div>
-            <p class="section-kicker">Envoi de la liste</p>
-            <h2 id="settingsDialogTitle">Réglage de l’e-mail</h2>
-          </div>
-          <button class="icon-button" type="button" data-close-dialog="settingsDialog" aria-label="Fermer">×</button>
-        </div>
-        <p class="modal-intro">
-          L’application ouvrira votre logiciel de messagerie avec la liste déjà rédigée et le destinataire renseigné.
-        </p>
-        <div class="form-grid one-column">
-          <div class="field">
-            <span>Destinataire fixe</span>
-            <div class="locked-recipient"><span aria-hidden="true">✉</span><strong>svenwikberg@gmail.com</strong></div>
-            <small>Cette liste personnelle sera toujours préparée pour cette adresse.</small>
-          </div>
-          <label class="field">
-            <span>Objet de l’e-mail</span>
-            <input id="settingsSubject" maxlength="100" value="Ma liste de courses" />
-          </label>
-        </div>
-        <div class="modal-footer">
-          <button class="button button-quiet" type="button" data-close-dialog="settingsDialog">Annuler</button>
-          <button class="button button-dark" type="submit">Enregistrer</button>
-        </div>
-      </form>
-    </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </body>

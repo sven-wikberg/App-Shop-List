@@ -1129,14 +1129,14 @@ a:focus-visible {
   margin-top: auto;
 }
 
-.button-email {
+.button-share {
   width: 100%;
   min-height: 50px;
   color: #fff;
   background: var(--green);
 }
 
-.button-email:hover:not(:disabled) {
+.button-share:hover:not(:disabled) {
   background: var(--green-dark);
 }
 
@@ -1165,7 +1165,7 @@ a:focus-visible {
   color: var(--muted);
 }
 
-.email-hint {
+.share-hint {
   margin: 15px 0 0;
   color: var(--muted);
   font-size: 10px;
@@ -1531,36 +1531,6 @@ a:focus-visible {
   color: var(--muted);
   font-size: 10px;
   line-height: 1.45;
-}
-
-.locked-recipient {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 11px 13px;
-  border: 1px solid #a8beaf;
-  border-radius: 10px;
-  color: var(--green-dark);
-  background: var(--green-soft);
-}
-
-.locked-recipient > span {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--green);
-  font-size: 12px;
-}
-
-.locked-recipient strong {
-  overflow: hidden;
-  font-size: 13px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .photo-field {

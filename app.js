@@ -1,7 +1,6 @@
 const STORAGE_KEYS = {
   products: "juste-ce-quil-faut.products.v3",
   needed: "juste-ce-quil-faut.needed.v3",
-  settings: "juste-ce-quil-faut.settings.v1",
 };
 
 const DEFAULT_PRODUCTS = [
@@ -105,12 +104,10 @@ const DEFAULT_PRODUCTS = [
 
 const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd", "#e1dced"];
 const DEFAULT_PRODUCT_IMAGE = "assets/product-placeholder.png";
-const FIXED_RECIPIENT = "svenwikberg@gmail.com";
 
 const state = {
   products: loadJSON(STORAGE_KEYS.products, DEFAULT_PRODUCTS),
   needed: new Set(loadJSON(STORAGE_KEYS.needed, [])),
-  settings: loadJSON(STORAGE_KEYS.settings, { subject: "Ma liste de courses" }),
   reviewCategory: "",
   reviewQueue: [],
   reviewIndex: 0,
@@ -122,7 +119,8 @@ const elements = {
   shoppingList: document.querySelector("#shoppingList"),
   listEmpty: document.querySelector("#listEmpty"),
   listCount: document.querySelector("#listCount"),
-  emailListButton: document.querySelector("#emailListButton"),
+  shareListButton: document.querySelector("#shareListButton"),
+  shareTopButton: document.querySelector("#shareTopButton"),
   copyListButton: document.querySelector("#copyListButton"),
   clearListButton: document.querySelector("#clearListButton"),
   locationStage: document.querySelector("#locationStage"),
@@ -142,9 +140,6 @@ const elements = {
   productSubmitLabel: document.querySelector("#productSubmitLabel"),
   manageProductList: document.querySelector("#manageProductList"),
   libraryCount: document.querySelector("#libraryCount"),
-  settingsDialog: document.querySelector("#settingsDialog"),
-  settingsForm: document.querySelector("#settingsForm"),
-  settingsSubject: document.querySelector("#settingsSubject"),
   categorySuggestions: document.querySelector("#categorySuggestions"),
   toast: document.querySelector("#toast"),
 };
@@ -368,7 +363,8 @@ function renderList() {
   elements.listCount.textContent = products.length;
   elements.listEmpty.hidden = hasItems;
   elements.shoppingList.hidden = !hasItems;
-  elements.emailListButton.disabled = !hasItems;
+  elements.shareListButton.disabled = !hasItems;
+  elements.shareTopButton.disabled = !hasItems;
   elements.copyListButton.disabled = !hasItems;
   elements.clearListButton.disabled = !hasItems;
   elements.shoppingList.innerHTML = products
@@ -492,7 +488,7 @@ function buildListText() {
     (result[product.category] ||= []).push(product);
     return result;
   }, {});
-  const lines = ["Bonjour,", "", "Voici la liste de courses :", ""];
+  const lines = ["MA LISTE DE COURSES", ""];
   Object.entries(groups).forEach(([category, items]) => {
     lines.push(category.toUpperCase());
     items.forEach((product) => {
@@ -500,15 +496,20 @@ function buildListText() {
     });
     lines.push("");
   });
-  lines.push("Merci !");
   return lines.join("\n");
 }
 
-function prepareEmail() {
+async function shareList() {
   if (!selectedProducts().length) return;
-  const subject = state.settings.subject || "Ma liste de courses";
-  const href = `mailto:${FIXED_RECIPIENT}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildListText())}`;
-  window.location.href = href;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "Ma liste de courses", text: buildListText() });
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+    }
+  }
+  await copyList();
 }
 
 async function copyList() {
@@ -528,11 +529,6 @@ async function copyList() {
   }
 }
 
-function openSettings() {
-  elements.settingsSubject.value = state.settings.subject || "Ma liste de courses";
-  elements.settingsDialog.showModal();
-}
-
 function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
@@ -541,7 +537,7 @@ function showToast(message) {
 }
 
 document.querySelector("#addProductButton").addEventListener("click", () => openProductForm());
-document.querySelector("#settingsButton").addEventListener("click", openSettings);
+elements.shareTopButton.addEventListener("click", shareList);
 document.querySelector(".brand").addEventListener("click", (event) => {
   event.preventDefault();
   showView("shopping");
@@ -631,7 +627,7 @@ elements.shoppingList.addEventListener("click", (event) => {
   if (item && event.target.closest(".remove-list-item")) toggleNeeded(item.dataset.listId, false);
 });
 
-elements.emailListButton.addEventListener("click", prepareEmail);
+elements.shareListButton.addEventListener("click", shareList);
 elements.copyListButton.addEventListener("click", copyList);
 elements.clearListButton.addEventListener("click", () => {
   if (!selectedProducts().length) return;
@@ -644,29 +640,6 @@ elements.clearListButton.addEventListener("click", () => {
 });
 
 elements.productForm.addEventListener("submit", handleProductSubmit);
-
-elements.settingsForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  state.settings = {
-    subject: elements.settingsSubject.value.trim() || "Ma liste de courses",
-  };
-  saveJSON(STORAGE_KEYS.settings, state.settings);
-  elements.settingsDialog.close();
-  showToast("Préférences enregistrées");
-});
-
-document.querySelectorAll("[data-close-dialog]").forEach((button) => {
-  button.addEventListener("click", () => document.querySelector(`#${button.dataset.closeDialog}`).close());
-});
-
-document.querySelectorAll("dialog").forEach((dialog) => {
-  dialog.addEventListener("click", (event) => {
-    const bounds = dialog.getBoundingClientRect();
-    const isBackdrop =
-      event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom;
-    if (isBackdrop) dialog.close();
-  });
-});
 
 state.needed = new Set([...state.needed].filter((id) => state.products.some((product) => product.id === id)));
 persistNeeded();
