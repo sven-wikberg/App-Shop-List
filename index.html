@@ -160,13 +160,20 @@
 
         <div class="product-builder">
           <aside class="product-form-aside">
-            <div class="default-product-image">
-              <img src="assets/product-placeholder.png" alt="Illustration générique d’un produit du quotidien" />
+            <div class="default-product-image" id="productImageDropzone" tabindex="0" aria-describedby="productImageStatus">
+              <img id="productImagePreview" src="assets/product-placeholder.png" alt="Aperçu de l’image du produit" />
+              <span class="image-paste-hint">Cliquez ici puis Ctrl+V</span>
             </div>
-            <div>
-              <p class="section-kicker">Image provisoire</p>
-              <h2>Une image simple pour commencer.</h2>
-              <p>Ce visuel sera utilisé par défaut. Nous ajouterons les vraies photos plus tard.</p>
+            <div class="product-image-editor">
+              <p class="section-kicker">Photo du produit</p>
+              <h2>Ajoutez votre propre image.</h2>
+              <p id="productImageStatus" aria-live="polite">Collez une image copiée ou choisissez une photo sur votre appareil.</p>
+              <div class="product-image-actions">
+                <button class="image-action-button image-action-button-primary" id="pasteProductImageButton" type="button">Coller l’image</button>
+                <label class="image-action-button" for="productImageInput">Choisir un fichier</label>
+                <input id="productImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                <button class="image-reset-button" id="clearProductImageButton" type="button" hidden>Remettre l’image par défaut</button>
+              </div>
             </div>
           </aside>
 

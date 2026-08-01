@@ -1260,9 +1260,15 @@ a:focus-visible {
 }
 
 .default-product-image {
+  position: relative;
   aspect-ratio: 1 / 0.86;
   overflow: hidden;
   background: #e7dfd1;
+  outline: none;
+}
+
+.default-product-image:focus-visible {
+  box-shadow: inset 0 0 0 4px var(--orange);
 }
 
 .default-product-image img {
@@ -1270,6 +1276,19 @@ a:focus-visible {
   height: 100%;
   display: block;
   object-fit: cover;
+}
+
+.image-paste-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: #fffaf2;
+  background: rgba(24, 48, 38, 0.84);
+  backdrop-filter: blur(8px);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .product-form-aside > div:last-child {
@@ -1283,11 +1302,69 @@ a:focus-visible {
   letter-spacing: -0.025em;
 }
 
-.product-form-aside > div:last-child > p:last-child {
+.product-image-editor > p:not(.section-kicker) {
   margin: 14px 0 0;
   color: rgba(248, 243, 233, 0.7);
   font-size: 13px;
   line-height: 1.6;
+}
+
+.product-image-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.image-action-button,
+.image-reset-button {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.image-action-button {
+  border: 1px solid rgba(248, 243, 233, 0.26);
+  color: #f8f3e9;
+  background: rgba(248, 243, 233, 0.09);
+}
+
+.image-action-button-primary {
+  border-color: var(--orange);
+  color: #2a2118;
+  background: var(--orange);
+}
+
+.image-action-button:hover,
+.image-action-button:focus-visible {
+  background: rgba(248, 243, 233, 0.18);
+}
+
+.image-action-button-primary:hover,
+.image-action-button-primary:focus-visible {
+  background: #f5aa80;
+}
+
+.image-reset-button {
+  min-height: 32px;
+  padding: 5px;
+  border: 0;
+  color: rgba(248, 243, 233, 0.72);
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.image-reset-button:hover,
+.image-reset-button:focus-visible {
+  color: #fff;
 }
 
 .product-form-card {

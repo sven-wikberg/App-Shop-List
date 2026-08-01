@@ -156,6 +156,9 @@ const DEFAULT_MINIMUM_STOCK = {
 
 const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd", "#e1dced"];
 const DEFAULT_PRODUCT_IMAGE = "assets/product-placeholder.png";
+const MAX_PRODUCT_IMAGE_BYTES = 12 * 1024 * 1024;
+const MAX_PRODUCT_IMAGE_DIMENSION = 720;
+let draftProductImage = DEFAULT_PRODUCT_IMAGE;
 
 function normalizeProducts(products) {
   return products.map((product) => ({
@@ -219,6 +222,12 @@ const elements = {
   productForm: document.querySelector("#productForm"),
   productFormTitle: document.querySelector("#productFormTitle"),
   productSubmitLabel: document.querySelector("#productSubmitLabel"),
+  productImageDropzone: document.querySelector("#productImageDropzone"),
+  productImagePreview: document.querySelector("#productImagePreview"),
+  productImageStatus: document.querySelector("#productImageStatus"),
+  productImageInput: document.querySelector("#productImageInput"),
+  pasteProductImageButton: document.querySelector("#pasteProductImageButton"),
+  clearProductImageButton: document.querySelector("#clearProductImageButton"),
   categoryForm: document.querySelector("#categoryForm"),
   categoryName: document.querySelector("#categoryName"),
   categoryOriginalName: document.querySelector("#categoryOriginalName"),
@@ -728,8 +737,99 @@ function showView(viewName) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function updateProductImagePreview(message = "") {
+  elements.productImagePreview.src = draftProductImage || DEFAULT_PRODUCT_IMAGE;
+  const hasCustomImage = Boolean(draftProductImage && draftProductImage !== DEFAULT_PRODUCT_IMAGE);
+  elements.clearProductImageButton.hidden = !hasCustomImage;
+  elements.productImageStatus.textContent = message || (hasCustomImage
+    ? "Cette image sera enregistrée avec le produit."
+    : "Collez une image copiée ou choisissez une photo sur votre appareil.");
+}
+
+function readImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result));
+    reader.addEventListener("error", reject);
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", reject);
+    image.src = dataUrl;
+  });
+}
+
+async function prepareProductImage(file) {
+  if (!file?.type?.startsWith("image/")) throw new Error("Le contenu choisi n’est pas une image.");
+  if (file.size > MAX_PRODUCT_IMAGE_BYTES) throw new Error("L’image est trop volumineuse (12 Mo maximum).");
+
+  const source = await readImageFile(file);
+  const image = await loadImage(source);
+  const scale = Math.min(1, MAX_PRODUCT_IMAGE_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Cette image ne peut pas être préparée.");
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/webp", 0.76);
+}
+
+async function useProductImage(file) {
+  try {
+    elements.productImageStatus.textContent = "Préparation de l’image…";
+    draftProductImage = await prepareProductImage(file);
+    updateProductImagePreview("Image prête — elle sera enregistrée avec le produit.");
+    showToast("Image ajoutée");
+  } catch (error) {
+    updateProductImagePreview();
+    window.alert(error.message || "Impossible d’utiliser cette image.");
+  } finally {
+    elements.productImageInput.value = "";
+  }
+}
+
+async function pasteProductImage() {
+  if (!navigator.clipboard?.read) {
+    elements.productImageDropzone.focus();
+    showToast("Appuyez maintenant sur Ctrl+V");
+    return;
+  }
+
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const clipboardItem of clipboardItems) {
+      const imageType = clipboardItem.types.find((type) => type.startsWith("image/"));
+      if (imageType) {
+        await useProductImage(await clipboardItem.getType(imageType));
+        return;
+      }
+    }
+    showToast("Aucune image dans le presse-papiers");
+  } catch {
+    elements.productImageDropzone.focus();
+    showToast("Appuyez maintenant sur Ctrl+V");
+  }
+}
+
+function handleProductImagePaste(event) {
+  const imageItem = [...(event.clipboardData?.items || [])].find((item) => item.type.startsWith("image/"));
+  if (!imageItem) return;
+  const file = imageItem.getAsFile();
+  if (!file) return;
+  event.preventDefault();
+  useProductImage(file);
+}
+
 function openProductForm(product = null) {
   elements.productForm.reset();
+  draftProductImage = product?.image || DEFAULT_PRODUCT_IMAGE;
+  updateProductImagePreview();
   document.querySelector("#productId").value = product?.id || "";
   document.querySelector("#productName").value = product?.name || "";
   document.querySelector("#productBrand").value = product?.brand || "";
@@ -766,7 +866,7 @@ function handleProductSubmit(event) {
     minimumStock: Math.max(0, Number.parseInt(document.querySelector("#productMinimumStock").value, 10) || 0),
     quantity: Math.max(1, Number.parseInt(document.querySelector("#productQuantity").value, 10) || 1),
     icon: existingProduct?.icon || "📦",
-    image: existingProduct?.image || DEFAULT_PRODUCT_IMAGE,
+    image: draftProductImage || DEFAULT_PRODUCT_IMAGE,
     accent: existingProduct?.accent || CATEGORY_ACCENTS[getCategories().indexOf(category) % CATEGORY_ACCENTS.length] || CATEGORY_ACCENTS[0],
   };
 
@@ -859,6 +959,17 @@ document.querySelector("#shoppingTab").addEventListener("click", goToHome);
 document.querySelector("#productsTab").addEventListener("click", () => openProductForm());
 document.querySelector("#backToListButton").addEventListener("click", goToHome);
 document.querySelector("#cancelProductButton").addEventListener("click", goToHome);
+elements.productImageInput.addEventListener("change", (event) => {
+  const [file] = event.target.files;
+  if (file) useProductImage(file);
+});
+elements.pasteProductImageButton.addEventListener("click", pasteProductImage);
+elements.clearProductImageButton.addEventListener("click", () => {
+  draftProductImage = DEFAULT_PRODUCT_IMAGE;
+  updateProductImagePreview("L’image par défaut sera utilisée.");
+});
+elements.productImageDropzone.addEventListener("click", () => elements.productImageDropzone.focus());
+elements.productView.addEventListener("paste", handleProductImagePaste);
 elements.locationGrid.addEventListener("click", (event) => {
   if (event.target.closest("[data-open-products]")) {
     openProductForm();
