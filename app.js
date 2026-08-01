@@ -104,6 +104,7 @@ const DEFAULT_PRODUCTS = [
 ];
 
 const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd", "#e1dced"];
+const DEFAULT_PRODUCT_IMAGE = "assets/product-placeholder.png";
 
 const state = {
   products: loadJSON(STORAGE_KEYS.products, []),
@@ -125,11 +126,11 @@ const elements = {
   copyListButton: document.querySelector("#copyListButton"),
   clearListButton: document.querySelector("#clearListButton"),
   searchInput: document.querySelector("#searchInput"),
-  productDialog: document.querySelector("#productDialog"),
+  shoppingView: document.querySelector("#shoppingView"),
+  productView: document.querySelector("#productView"),
   productForm: document.querySelector("#productForm"),
-  productDialogTitle: document.querySelector("#productDialogTitle"),
-  productImageData: document.querySelector("#productImageData"),
-  photoPreview: document.querySelector("#photoPreview"),
+  productFormTitle: document.querySelector("#productFormTitle"),
+  productSubmitLabel: document.querySelector("#productSubmitLabel"),
   settingsDialog: document.querySelector("#settingsDialog"),
   settingsForm: document.querySelector("#settingsForm"),
   settingsEmail: document.querySelector("#settingsEmail"),
@@ -152,7 +153,7 @@ function saveJSON(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch {
-    showToast("La sauvegarde locale est pleine. Essayez une photo plus légère.");
+    showToast("Impossible d’enregistrer sur cet appareil.");
     return false;
   }
 }
@@ -219,10 +220,7 @@ function filteredProducts() {
 }
 
 function visualMarkup(product, className = "product-visual") {
-  const emojiClass = className === "shopping-thumb" ? "" : "product-emoji";
-  const content = product.image
-    ? `<img src="${escapeHTML(product.image)}" alt="" />`
-    : `<span class="${emojiClass}" aria-hidden="true">${escapeHTML(product.icon || "🧺")}</span>`;
+  const content = `<img src="${escapeHTML(product.image || DEFAULT_PRODUCT_IMAGE)}" alt="" />`;
   return `<div class="${className}" style="--product-accent:${accentFor(product)}">${content}</div>`;
 }
 
@@ -307,7 +305,19 @@ function toggleNeeded(id, force) {
   renderList();
 }
 
-function openProductDialog(product = null) {
+function showView(viewName) {
+  const showingProducts = viewName === "products";
+  elements.shoppingView.hidden = showingProducts;
+  elements.productView.hidden = !showingProducts;
+  document.querySelectorAll("[data-view-target]").forEach((button) => {
+    const isActive = button.dataset.viewTarget === viewName;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function openProductForm(product = null) {
   elements.productForm.reset();
   document.querySelector("#productId").value = product?.id || "";
   document.querySelector("#productName").value = product?.name || "";
@@ -316,20 +326,10 @@ function openProductDialog(product = null) {
   document.querySelector("#productFormat").value = product?.format || "";
   document.querySelector("#productCategory").value = product?.category || "Cuisine";
   document.querySelector("#productQuantity").value = product?.quantity || 1;
-  document.querySelector("#productIcon").value = product?.icon || "🧺";
-  elements.productImageData.value = product?.image || "";
-  elements.productDialogTitle.textContent = product ? "Modifier le produit" : "Ajouter un produit";
-  updatePhotoPreview();
-  elements.productDialog.showModal();
+  elements.productFormTitle.textContent = product ? "Modifier le produit" : "Créer un produit";
+  elements.productSubmitLabel.textContent = product ? "Enregistrer les modifications" : "Créer le produit";
+  showView("products");
   requestAnimationFrame(() => document.querySelector("#productName").focus());
-}
-
-function updatePhotoPreview() {
-  const image = elements.productImageData.value;
-  const icon = document.querySelector("#productIcon").value || "🧺";
-  elements.photoPreview.innerHTML = image
-    ? `<img src="${escapeHTML(image)}" alt="Aperçu du produit" />`
-    : `<span aria-hidden="true">${escapeHTML(icon)}</span>`;
 }
 
 function makeId(name) {
@@ -352,8 +352,8 @@ function handleProductSubmit(event) {
     format: document.querySelector("#productFormat").value.trim(),
     category,
     quantity: Math.max(1, Number.parseInt(document.querySelector("#productQuantity").value, 10) || 1),
-    icon: document.querySelector("#productIcon").value.trim() || "🧺",
-    image: elements.productImageData.value,
+    icon: existingProduct?.icon || "📦",
+    image: existingProduct?.image || DEFAULT_PRODUCT_IMAGE,
     accent: existingProduct?.accent || CATEGORY_ACCENTS[getCategories().indexOf(category) % CATEGORY_ACCENTS.length] || CATEGORY_ACCENTS[0],
   };
 
@@ -363,8 +363,8 @@ function handleProductSubmit(event) {
 
   if (!saveJSON(STORAGE_KEYS.products, nextProducts)) return;
   state.products = nextProducts;
-  elements.productDialog.close();
   render();
+  showView("shopping");
   showToast(existingProduct ? "Produit modifié" : "Produit ajouté");
 }
 
@@ -435,30 +435,16 @@ function showToast(message) {
   showToast.timeout = window.setTimeout(() => elements.toast.classList.remove("show"), 2200);
 }
 
-function compressImage(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = () => {
-      const image = new Image();
-      image.onerror = reject;
-      image.onload = () => {
-        const maxSide = 700;
-        const ratio = Math.min(1, maxSide / Math.max(image.width, image.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(image.width * ratio));
-        canvas.height = Math.max(1, Math.round(image.height * ratio));
-        canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.78));
-      };
-      image.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-document.querySelector("#addProductButton").addEventListener("click", () => openProductDialog());
+document.querySelector("#addProductButton").addEventListener("click", () => openProductForm());
 document.querySelector("#settingsButton").addEventListener("click", openSettings);
+document.querySelector(".brand").addEventListener("click", (event) => {
+  event.preventDefault();
+  showView("shopping");
+});
+document.querySelector("#shoppingTab").addEventListener("click", () => showView("shopping"));
+document.querySelector("#productsTab").addEventListener("click", () => openProductForm());
+document.querySelector("#backToListButton").addEventListener("click", () => showView("shopping"));
+document.querySelector("#cancelProductButton").addEventListener("click", () => showView("shopping"));
 elements.searchInput.addEventListener("input", (event) => {
   state.search = event.target.value;
   renderProducts();
@@ -479,7 +465,7 @@ elements.productGrid.addEventListener("click", (event) => {
   const product = state.products.find((item) => item.id === card.dataset.productId);
   if (!product) return;
   if (action === "toggle") toggleNeeded(product.id);
-  if (action === "edit") openProductDialog(product);
+  if (action === "edit") openProductForm(product);
   if (action === "delete") deleteProduct(product);
 });
 
@@ -501,22 +487,6 @@ elements.clearListButton.addEventListener("click", () => {
 });
 
 elements.productForm.addEventListener("submit", handleProductSubmit);
-document.querySelector("#productIcon").addEventListener("input", updatePhotoPreview);
-document.querySelector("#productImage").addEventListener("change", async (event) => {
-  const [file] = event.target.files;
-  if (!file) return;
-  try {
-    elements.productImageData.value = await compressImage(file);
-    updatePhotoPreview();
-  } catch {
-    showToast("Impossible de lire cette image");
-  }
-});
-document.querySelector("#removePhotoButton").addEventListener("click", () => {
-  elements.productImageData.value = "";
-  document.querySelector("#productImage").value = "";
-  updatePhotoPreview();
-});
 
 elements.settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();

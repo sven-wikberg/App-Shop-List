@@ -24,6 +24,14 @@
         </a>
 
         <div class="topbar-actions">
+          <nav class="view-tabs" aria-label="Navigation principale">
+            <button class="view-tab active" id="shoppingTab" type="button" data-view-target="shopping" aria-pressed="true">
+              Ma liste
+            </button>
+            <button class="view-tab" id="productsTab" type="button" data-view-target="products" aria-pressed="false">
+              Mes produits
+            </button>
+          </nav>
           <button class="button button-quiet" id="settingsButton" type="button">
             <span aria-hidden="true">✉</span>
             <span class="button-label">E-mail</span>
@@ -35,7 +43,7 @@
         </div>
       </header>
 
-      <main>
+      <main class="view" id="shoppingView">
         <section class="hero" aria-labelledby="pageTitle">
           <div>
             <p class="eyebrow">Vérification du placard</p>
@@ -115,72 +123,84 @@
           </aside>
         </section>
       </main>
-    </div>
 
-    <dialog class="modal" id="productDialog" aria-labelledby="productDialogTitle">
-      <form class="modal-card" id="productForm">
-        <div class="modal-header">
+      <section class="view product-manager" id="productView" aria-labelledby="productFormTitle" hidden>
+        <div class="product-manager-heading">
           <div>
-            <p class="section-kicker">Référence personnelle</p>
-            <h2 id="productDialogTitle">Ajouter un produit</h2>
+            <p class="eyebrow">Catalogue personnel</p>
+            <h1 id="productFormTitle">Créer un produit</h1>
+            <p>Enregistrez exactement la référence et la quantité que vous souhaitez retrouver sur votre liste.</p>
           </div>
-          <button class="icon-button" type="button" data-close-dialog="productDialog" aria-label="Fermer">×</button>
+          <button class="button button-quiet" id="backToListButton" type="button">← Retour à ma liste</button>
         </div>
 
-        <input id="productId" type="hidden" />
-        <input id="productImageData" type="hidden" />
+        <div class="product-builder">
+          <aside class="product-form-aside">
+            <div class="default-product-image">
+              <img src="assets/product-placeholder.png" alt="Illustration générique d’un produit du quotidien" />
+            </div>
+            <div>
+              <p class="section-kicker">Image provisoire</p>
+              <h2>Une image simple pour commencer.</h2>
+              <p>Ce visuel sera utilisé par défaut. Nous ajouterons les vraies photos plus tard.</p>
+            </div>
+          </aside>
 
-        <div class="form-grid">
-          <label class="field field-wide">
-            <span>Nom du produit *</span>
-            <input id="productName" name="name" required maxlength="70" placeholder="Ex. Liquide vaisselle" />
-          </label>
-          <label class="field">
-            <span>Marque</span>
-            <input id="productBrand" name="brand" maxlength="60" placeholder="Ex. Rainett" />
-          </label>
-          <label class="field">
-            <span>Référence / variante</span>
-            <input id="productDetail" name="detail" maxlength="80" placeholder="Ex. Citron vert" />
-          </label>
-          <label class="field">
-            <span>Format</span>
-            <input id="productFormat" name="format" maxlength="40" placeholder="Ex. 500 ml" />
-          </label>
-          <label class="field">
-            <span>Endroit</span>
-            <input id="productCategory" name="category" list="categorySuggestions" required maxlength="40" placeholder="Ex. Cuisine" />
-            <datalist id="categorySuggestions"></datalist>
-          </label>
-          <label class="field">
-            <span>Quantité à acheter *</span>
-            <input id="productQuantity" name="quantity" type="number" required min="1" max="99" value="1" inputmode="numeric" />
-          </label>
-          <label class="field">
-            <span>Petit repère</span>
-            <input id="productIcon" name="icon" maxlength="4" value="🧺" aria-describedby="iconHelp" />
-            <small id="iconHelp">Un emoji pour le reconnaître rapidement.</small>
-          </label>
-          <div class="field field-wide photo-field">
-            <span>Photo du produit</span>
-            <div class="photo-control">
-              <div class="photo-preview" id="photoPreview" aria-label="Aperçu de la photo"><span>🧺</span></div>
+          <form class="product-form-card" id="productForm">
+            <input id="productId" type="hidden" />
+
+            <div class="form-section-heading">
               <div>
-                <label class="button button-quiet upload-button" for="productImage">Choisir une photo</label>
-                <input id="productImage" type="file" accept="image/*" hidden />
-                <button class="text-button" id="removePhotoButton" type="button">Retirer la photo</button>
-                <p>La photo reste uniquement sur cet appareil.</p>
+                <span class="form-step">01</span>
+                <h2>Identifier le produit</h2>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div class="modal-footer">
-          <button class="button button-quiet" type="button" data-close-dialog="productDialog">Annuler</button>
-          <button class="button button-dark" type="submit">Enregistrer le produit</button>
+            <div class="form-grid">
+              <label class="field field-wide">
+                <span>Nom du produit *</span>
+                <input id="productName" name="name" required maxlength="70" placeholder="Ex. Liquide vaisselle" />
+              </label>
+              <label class="field">
+                <span>Marque</span>
+                <input id="productBrand" name="brand" maxlength="60" placeholder="Ex. Rainett" />
+              </label>
+              <label class="field">
+                <span>Référence / variante</span>
+                <input id="productDetail" name="detail" maxlength="80" placeholder="Ex. Citron vert" />
+              </label>
+              <label class="field">
+                <span>Format</span>
+                <input id="productFormat" name="format" maxlength="40" placeholder="Ex. 500 ml" />
+              </label>
+              <label class="field">
+                <span>Endroit *</span>
+                <input id="productCategory" name="category" list="categorySuggestions" required maxlength="40" placeholder="Ex. Cuisine" />
+                <datalist id="categorySuggestions"></datalist>
+              </label>
+            </div>
+
+            <div class="form-section-heading second-step">
+              <div>
+                <span class="form-step">02</span>
+                <h2>Définir l’achat</h2>
+              </div>
+              <p>Combien faut-il en acheter lorsque ce produit manque ?</p>
+            </div>
+
+            <label class="field quantity-field">
+              <span>Quantité à acheter *</span>
+              <input id="productQuantity" name="quantity" type="number" required min="1" max="99" value="1" inputmode="numeric" />
+            </label>
+
+            <div class="product-form-footer">
+              <button class="button button-quiet" id="cancelProductButton" type="button">Annuler</button>
+              <button class="button button-dark" type="submit"><span id="productSubmitLabel">Créer le produit</span> →</button>
+            </div>
+          </form>
         </div>
-      </form>
-    </dialog>
+      </section>
+    </div>
 
     <dialog class="modal modal-small" id="settingsDialog" aria-labelledby="settingsDialogTitle">
       <form class="modal-card" id="settingsForm">
