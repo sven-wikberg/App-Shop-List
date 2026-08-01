@@ -211,6 +211,7 @@ const elements = {
   reviewStage: document.querySelector("#reviewStage"),
   completeStage: document.querySelector("#completeStage"),
   locationGrid: document.querySelector("#locationGrid"),
+  resetCompletedCategoriesButton: document.querySelector("#resetCompletedCategoriesButton"),
   reviewCard: document.querySelector("#reviewCard"),
   reviewRoom: document.querySelector("#reviewRoom"),
   reviewProgressText: document.querySelector("#reviewProgressText"),
@@ -517,6 +518,7 @@ function roomIcon(category) {
 
 function renderLocations() {
   const categories = getCategories();
+  elements.resetCompletedCategoriesButton.disabled = state.completedCategories.size === 0;
   if (!categories.length) {
     elements.locationGrid.innerHTML = `
       <div class="location-empty">
@@ -959,6 +961,12 @@ document.querySelector("#shoppingTab").addEventListener("click", goToHome);
 document.querySelector("#productsTab").addEventListener("click", () => openProductForm());
 document.querySelector("#backToListButton").addEventListener("click", goToHome);
 document.querySelector("#cancelProductButton").addEventListener("click", goToHome);
+elements.resetCompletedCategoriesButton.addEventListener("click", () => {
+  if (!state.completedCategories.size) return;
+  state.completedCategories.clear();
+  renderLocations();
+  showToast("Placards réinitialisés");
+});
 elements.productImageInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
   if (file) useProductImage(file);

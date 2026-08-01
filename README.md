@@ -7,6 +7,7 @@ Une petite application web locale pour préparer une liste de courses à partir 
 Ouvrir simplement `index.html` dans un navigateur récent.
 
 - Choisir un endroit, puis vérifier les produits un par un avec **Pas besoin** ou **Il en faut**.
+- Utiliser **Réinitialiser les placards** pour effacer les marques « Fait » sans modifier la liste de courses.
 - Les cartes peuvent aussi être glissées à gauche ou à droite, comme une liste « Tinder ».
 - Utiliser l’onglet **Mes produits** pour créer ou modifier les références, le minimum à garder en stock et la quantité habituelle à acheter.
 - Ajouter une photo au produit en la collant depuis le presse-papiers ou en choisissant un fichier sur l’appareil.
