@@ -184,6 +184,7 @@ const state = {
   reviewIndex: 0,
   completedCategories: new Set(),
   decisionLocked: false,
+  decisionTimer: null,
 };
 
 const elements = {
@@ -350,12 +351,14 @@ function showFlowStage(stageName) {
 }
 
 function startReview(category) {
+  if (state.decisionTimer) window.clearTimeout(state.decisionTimer);
   const queue = state.products.filter((product) => product.category === category);
   if (!queue.length) return;
   state.reviewCategory = category;
   state.reviewQueue = queue;
   state.reviewIndex = 0;
   state.decisionLocked = false;
+  state.decisionTimer = null;
   showFlowStage("review");
   renderReviewCard();
 }
@@ -409,15 +412,27 @@ function decideCurrentProduct(isNeeded) {
   card.style.transform = "";
   card.classList.add(isNeeded ? "leaving-right" : "leaving-left");
 
-  window.setTimeout(() => {
+  state.decisionTimer = window.setTimeout(() => {
     if (isNeeded) state.needed.add(product.id);
     else state.needed.delete(product.id);
     persistNeeded();
     renderList();
     state.reviewIndex += 1;
     state.decisionLocked = false;
+    state.decisionTimer = null;
     renderReviewCard();
   }, 210);
+}
+
+function goToHome() {
+  if (state.decisionTimer) window.clearTimeout(state.decisionTimer);
+  state.decisionTimer = null;
+  state.decisionLocked = false;
+  state.reviewQueue = [];
+  state.reviewIndex = 0;
+  state.reviewCategory = "";
+  showFlowStage("locations");
+  showView("shopping");
 }
 
 function finishReview() {
@@ -620,12 +635,12 @@ document.querySelector("#addProductButton").addEventListener("click", () => open
 elements.shareTopButton.addEventListener("click", shareList);
 document.querySelector(".brand").addEventListener("click", (event) => {
   event.preventDefault();
-  showView("shopping");
+  goToHome();
 });
-document.querySelector("#shoppingTab").addEventListener("click", () => showView("shopping"));
+document.querySelector("#shoppingTab").addEventListener("click", goToHome);
 document.querySelector("#productsTab").addEventListener("click", () => openProductForm());
-document.querySelector("#backToListButton").addEventListener("click", () => showView("shopping"));
-document.querySelector("#cancelProductButton").addEventListener("click", () => showView("shopping"));
+document.querySelector("#backToListButton").addEventListener("click", goToHome);
+document.querySelector("#cancelProductButton").addEventListener("click", goToHome);
 elements.locationGrid.addEventListener("click", (event) => {
   if (event.target.closest("[data-open-products]")) {
     openProductForm();
