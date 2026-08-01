@@ -1,4 +1,9 @@
 const STORAGE_KEYS = {
+  products: "juste-ce-quil-faut.products.v4",
+  needed: "juste-ce-quil-faut.needed.v4",
+};
+
+const LEGACY_STORAGE_KEYS = {
   products: "juste-ce-quil-faut.products.v3",
   needed: "juste-ce-quil-faut.needed.v3",
 };
@@ -102,12 +107,55 @@ const DEFAULT_PRODUCTS = [
   },
 ];
 
+const CLOTHING_EXAMPLES = [
+  {
+    id: "chaussettes-noires",
+    name: "Chaussettes noires",
+    brand: "Uniqlo",
+    detail: "Coton — noir",
+    format: "Lot de 4 paires",
+    category: "Vêtements à renouveler",
+    quantity: 1,
+    icon: "🧦",
+    image: "",
+    accent: "#ded9cf",
+  },
+  {
+    id: "boxers-noirs",
+    name: "Boxers noirs",
+    brand: "DIM",
+    detail: "Coton stretch — noir",
+    format: "Lot de 3",
+    category: "Vêtements à renouveler",
+    quantity: 1,
+    icon: "🩳",
+    image: "",
+    accent: "#d9dce3",
+  },
+];
+
 const CATEGORY_ACCENTS = ["#dbe9d7", "#f5e1a8", "#eadfcf", "#d8e7ea", "#f3d8bd", "#e1dced"];
 const DEFAULT_PRODUCT_IMAGE = "assets/product-placeholder.png";
 
+function loadInitialProducts() {
+  const currentProducts = loadJSON(STORAGE_KEYS.products, null);
+  if (Array.isArray(currentProducts)) return currentProducts;
+  const previousProducts = loadJSON(LEGACY_STORAGE_KEYS.products, null);
+  const baseProducts = Array.isArray(previousProducts) ? previousProducts : DEFAULT_PRODUCTS;
+  const existingIds = new Set(baseProducts.map((product) => product.id));
+  return [...baseProducts, ...CLOTHING_EXAMPLES.filter((product) => !existingIds.has(product.id))];
+}
+
+function loadInitialNeeded() {
+  const currentNeeded = loadJSON(STORAGE_KEYS.needed, null);
+  if (Array.isArray(currentNeeded)) return currentNeeded;
+  const previousNeeded = loadJSON(LEGACY_STORAGE_KEYS.needed, []);
+  return Array.isArray(previousNeeded) ? previousNeeded : [];
+}
+
 const state = {
-  products: loadJSON(STORAGE_KEYS.products, DEFAULT_PRODUCTS),
-  needed: new Set(loadJSON(STORAGE_KEYS.needed, [])),
+  products: loadInitialProducts(),
+  needed: new Set(loadInitialNeeded()),
   reviewCategory: "",
   reviewQueue: [],
   reviewIndex: 0,
@@ -208,6 +256,7 @@ function visualMarkup(product, className = "product-visual") {
 
 function roomIcon(category) {
   const normalized = normalize(category);
+  if (normalized.includes("vetement") || normalized.includes("habit")) return "🧦";
   if (normalized.includes("cuisine")) return "🍽️";
   if (normalized.includes("bain")) return "🫧";
   if (normalized.includes("buander")) return "👕";
@@ -642,5 +691,6 @@ elements.clearListButton.addEventListener("click", () => {
 elements.productForm.addEventListener("submit", handleProductSubmit);
 
 state.needed = new Set([...state.needed].filter((id) => state.products.some((product) => product.id === id)));
+saveJSON(STORAGE_KEYS.products, state.products);
 persistNeeded();
 render();
